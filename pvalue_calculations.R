@@ -1,6 +1,7 @@
 ####### Libraries #######
 
 library(RulesTools)
+library(arules)
 
 
 
@@ -42,6 +43,13 @@ discretizations <- c(
   1.04                       # for volume filtered (median)
 )
 
+consequents <- c(
+  "eDNAConc=high", 
+  "eDNAConc=low", 
+  "eFishCatch=present", 
+  "eFishCatch=absent"
+)
+
 
 
 
@@ -77,3 +85,32 @@ for(i in seq_along(discretizations)){
 # backpack and site already discrete, so they can be added to df directly
 discretized_df[["Backpack"]] <- as.factor(BrookTrout$Backpack)
 discretized_df[["Site"]] <- as.factor(BrookTrout$Site)
+
+# convert df into type transactions
+transactions <- as(discretized_df, "transactions")
+
+
+
+
+####### Rule Mining #######
+
+rules <- list()
+
+for (con in consequents) {
+  
+  # mine rules
+  raw_rules <- apriori(
+    transactions,
+    parameter = list(support = 1/NUM_TRANSACTIONS, confidence = 1/NUM_TRANSACTIONS),
+    appearance = list(rhs = con)
+  )
+  
+  # subset non-redundant rules
+  pruned_rules <- raw_rules[!is.redundant(raw_rules, measure = "confidence")]
+  
+  rules[[con]] <- list(
+    raw = raw_rules,
+    pruned = pruned_rules,
+  )
+  
+}
