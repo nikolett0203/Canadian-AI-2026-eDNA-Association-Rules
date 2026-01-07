@@ -10,6 +10,7 @@ library(tidyr)
 
 ####### P-Value Function #######
 
+# fix for edge cases, non-integer contingency cells, etc
 get_pvalues <- function(rules, transactions) {
   
   # stores support, confidence, lift, count, etc. because we want count
@@ -158,18 +159,23 @@ for (con in consequents) {
   # subset non-redundant rules
   pruned_rules <- raw_rules[!is.redundant(raw_rules, measure = "confidence")]
   
-  # subset significant rules (unadjusted + multiple comparison corrections)
-  unadj_rules = pruned_rules[is.significant(pruned_rules, alpha = 0.05)] %>%
-    sort(by = c("lift", "confidence", "support"))
-  
-  BH_rules = pruned_rules[is.significant(pruned_rules, alpha = 0.05, adjust = "BH")] %>%
-    sort(by = c("lift", "confidence", "support"))
-  
-  BF_rules = pruned_rules[is.significant(pruned_rules, alpha = 0.05, adjust = "bonferroni")] %>%
-    sort(by = c("lift", "confidence", "support"))
-  
   # isolate p-values
   pvalues = get_pvalues(pruned_rules, transactions)
+  
+  # attach to rule quality
+  quality(pruned_rules)$pvalue <- pvalues
+  quality(pruned_rules)$p_BH <- p.adjust(pvalues, method = "BH")
+  quality(pruned_rules)$p_BF <- p.adjust(pvalues, method = "bonferroni")
+  
+  # subset significant rules (unadjusted + multiple comparison corrections)
+  unadj_rules = sort(pruned_rules[quality(pruned_rules)$pvalue <= 0.05],
+                     by = c("lift","confidence","support"))
+  
+  BH_rules <- sort(pruned_rules[quality(pruned_rules)$p_BH <= 0.05],
+                   by = c("lift","confidence","support"))
+  
+  BF_rules <- sort(pruned_rules[quality(pruned_rules)$p_BF <= 0.05],
+                   by = c("lift","confidence","support"))
   
   # final rules list
   rules[[con]] <- list(
@@ -177,8 +183,7 @@ for (con in consequents) {
     pruned = pruned_rules,
     unadj = unadj_rules,
     BH = BH_rules,
-    BF = BF_rules,
-    pvals = pvalues
+    BF = BF_rules
   )
   
 }
