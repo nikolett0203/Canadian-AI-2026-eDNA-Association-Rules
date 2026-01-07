@@ -7,6 +7,52 @@ library(tidyr)
 
 
 
+
+####### P-Value Function #######
+
+get_pvalues <- function(rules, transactions) {
+  
+  # stores support, confidence, lift, count, etc. because we want count
+  quality_df <- quality(rules)
+  
+  n <- length(transactions)
+  
+  p_values <- sapply(1:length(rules), function(i) {
+    
+    rule <- rules[i]
+    
+    lhs_items <- lhs(rule)
+    rhs_items <- rhs(rule)
+    
+    # figure out how many transactions have rhs and lhs together
+    a <- quality_df$count[i]
+    
+    # figure out how many had lhs only 
+    # support returns fraction of itemsets with rule so we *n to get raw count
+    lhs_count <- support(lhs_items, transactions) * n
+    b <- lhs_count - a
+    
+    # rhs only
+    rhs_count <- support(rhs_items, transactions) * n
+    c <- rhs_count - a
+    
+    # count of transactions with neither lhs nor rhs
+    d <- n - a - b - c
+    
+    # build contingency table 
+    cont_table <- matrix(c(a, b, c, d), nrow = 2)
+    
+    # do the test
+    fisher.test(cont_table, alternative = "greater")$p.value
+  })
+  
+  return(p_values)
+}
+
+
+
+
+
 ####### Analysis Parameters #######
 
 NUM_TRANSACTIONS <- 126
@@ -54,6 +100,7 @@ consequents <- c(
 
 
 
+
 ####### Data Pre-Processing #######
 
 # init empty df
@@ -87,8 +134,9 @@ for(i in seq_along(discretizations)){
 discretized_df[["Backpack"]] <- as.factor(BrookTrout$Backpack)
 discretized_df[["Site"]] <- as.factor(BrookTrout$Site)
 
-# convert df into type transactions
+# convert df into transactions
 transactions <- as(discretized_df, "transactions")
+
 
 
 
@@ -97,6 +145,7 @@ transactions <- as(discretized_df, "transactions")
 
 rules <- list()
 
+# loop for each targeted consequent
 for (con in consequents) {
   
   # mine rules
@@ -119,13 +168,25 @@ for (con in consequents) {
   BF_rules = pruned_rules[is.significant(pruned_rules, alpha = 0.05, adjust = "bonferroni")] %>%
     sort(by = c("lift", "confidence", "support"))
   
+  # isolate p-values
+  pvalues = get_pvalues(pruned_rules, transactions)
+  
   # final rules list
   rules[[con]] <- list(
     raw = raw_rules,
     pruned = pruned_rules,
     unadj = unadj_rules,
     BH = BH_rules,
-    BF = BF_rules
+    BF = BF_rules,
+    pvals = pvalues
   )
   
 }
+
+
+
+
+
+####### P-Value Analysis #######
+
+
