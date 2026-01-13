@@ -57,6 +57,33 @@ get_pvalues <- function(rules, transactions) {
 
 
 
+####### Scatterplot Functions #######
+
+scatter_pval <- function(rules, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha){
+  
+  ggplot(rules, aes(x = .data[[x_var]], y = .data[[y_var]]) ) +
+    geom_point(aes(size = .data[[size_var]], color = .data[[color_var]])) + 
+    scale_color_viridis(option="D") +
+    labs(x = x_lab, y = y_lab) +
+    geom_hline(yintercept = alpha, linetype = "dashed", color = "red") +
+    guides(
+      color = guide_colorbar(order = 1),
+      size  = guide_legend(order = 2)
+    )
+  
+}
+
+plots_2x2 <- function(plots){
+  
+  (plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]]) +
+    plot_layout(ncol = 2) +
+    plot_annotation(tag_levels = "A")
+  
+}
+
+
+
+
 
 ####### Analysis Parameters #######
 
@@ -196,19 +223,46 @@ for (con in consequents) {
 
 
 
-####### P-Value Scatterplots #######
+####### BH Scatterplots #######
 
-scatterplots <- list()
+BH_plots <- list()
+
+for (i in 1:4){
+
+  BH_plots[[i]] <-
+    scatter_pval(
+      rules = quality(rules[[i]]$BH), 
+      x_var = "confidence", 
+      y_var = "p_BH", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = "BH-Adjusted P-Value", 
+      alpha = 0.05
+    )
+}
+
+plots_2x2(BH_plots)
+
+# final graphic
+
+
+
+
+
+####### Bonferroni Scatterplots #######
+
+BF_plots <- list()
 
 for (i in 1:4){
   
-  subset <- quality(rules[[i]]$BH)
+  subset <- quality(rules[[i]]$BF)
   
-  scatterplots[[i]] <- 
-    ggplot(subset, aes(x=confidence, y=p_BH)) +
+  BF_plots[[i]] <- 
+    ggplot(subset, aes(x=confidence, y=p_BF)) +
     geom_point(aes(size=support, color=lift)) +
     scale_color_viridis(option="D") +
-    labs(x="Confidence", y="BH-Adjusted P-Value") +
+    labs(x="Confidence", y="Bonferroni-Adjusted P-Value") +
     geom_hline(yintercept = 0.05, linetype = "dashed", color = "red") +
     guides(
       color = guide_colorbar(order = 1),
@@ -218,7 +272,7 @@ for (i in 1:4){
 }
 
 # final graphic
-(scatterplots[[1]] + scatterplots[[2]] + scatterplots[[3]] + scatterplots[[4]]) +
+(BF_plots[[1]] + BF_plots[[2]] + BF_plots[[3]] + BF_plots[[4]]) +
   plot_layout(ncol = 2) +
   plot_annotation(tag_levels = "A")
 
