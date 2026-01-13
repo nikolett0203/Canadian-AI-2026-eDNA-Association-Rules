@@ -85,6 +85,16 @@ plots_2x2 <- function(plots){
 
 
 
+####### Heatmap Function #######
+
+heatmap_pval <- function(){
+  
+}
+
+
+
+
+
 ####### Analysis Parameters #######
 
 NUM_TRANSACTIONS <- 126
@@ -198,6 +208,7 @@ for (con in consequents) {
   quality(pruned_rules)$p_BH <- p.adjust(pvalues, method = "BH")
   quality(pruned_rules)$p_BF <- p.adjust(pvalues, method = "bonferroni")
   quality(pruned_rules)$rule_length <- size(pruned_rules)
+  quality(pruned_rules)$lhs <- labels(lhs(pruned_rules))
   
   # subset significant rules (unadjusted + multiple comparison corrections)
   unadj_rules <- sort(pruned_rules[quality(pruned_rules)$pvalue <= 0.05],
@@ -257,7 +268,7 @@ for (i in 1:4){
   
   BF_plots[[i]] <-
     scatter_pval(
-      rules = quality(rules[[i]]$BF), 
+      df = quality(rules[[i]]$BF), 
       x_var = "confidence", 
       y_var = "p_BF", 
       size_var = "support", 
@@ -269,3 +280,40 @@ for (i in 1:4){
 }
 
 print(plots_2x2(BF_plots))
+
+
+
+
+
+####### Rule Length Scatterplots #######
+
+length_plots <- list()
+
+for (i in 1:4){
+  
+  length_plots[[i]] <-
+    scatter_pval(
+      df = quality(rules[[i]]$BH), 
+      x_var = "rule_length", 
+      y_var = "p_BH", 
+      size_var = "support", 
+      color_var = "confidence", 
+      x_lab = "Rule Length", 
+      y_lab = "BH-Adjusted P-Value", 
+      alpha = 0.05
+    )
+}
+
+print(plots_2x2(length_plots))
+
+
+
+
+
+####### P-Value Heatmaps #######
+
+ggplot(
+  quality(rules[[1]]$BH), aes(x = "BH-Adjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))) +
+  geom_tile(color = "white") +
+  scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
+  labs(x = "", y = "Antecedent")
