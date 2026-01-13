@@ -85,16 +85,6 @@ plots_2x2 <- function(plots){
 
 
 
-####### Heatmap Function #######
-
-heatmap_pval <- function(){
-  
-}
-
-
-
-
-
 ####### Analysis Parameters #######
 
 NUM_TRANSACTIONS <- 126
@@ -312,8 +302,17 @@ print(plots_2x2(length_plots))
 
 ####### P-Value Heatmaps #######
 
-ggplot(
-  quality(rules[[1]]$BH), aes(x = "BH-Adjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))) +
-  geom_tile(color = "white") +
-  scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
-  labs(x = "", y = "Antecedent")
+p_heatmaps <- list()
+
+for (i in 1:4){
+  p_heatmaps[[i]] <-
+    ggplot(
+      quality(rules[[i]]$BH), 
+      aes(x = "BH-Adjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
+    ) +
+    geom_tile(color = "white") +
+    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
+    labs(x = "", y = "Antecedent")
+  
+}
+
