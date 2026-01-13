@@ -59,9 +59,9 @@ get_pvalues <- function(rules, transactions) {
 
 ####### Scatterplot Functions #######
 
-scatter_pval <- function(rules, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha){
+scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha){
   
-  ggplot(rules, aes(x = .data[[x_var]], y = .data[[y_var]]) ) +
+  ggplot(df, aes(x = .data[[x_var]], y = .data[[y_var]]) ) +
     geom_point(aes(size = .data[[size_var]], color = .data[[color_var]])) + 
     scale_color_viridis(option="D") +
     labs(x = x_lab, y = y_lab) +
@@ -191,15 +191,16 @@ for (con in consequents) {
   pruned_rules <- raw_rules[!is.redundant(raw_rules, measure = "confidence")]
   
   # isolate p-values
-  pvalues = get_pvalues(pruned_rules, transactions)
+  pvalues <- get_pvalues(pruned_rules, transactions)
   
   # attach to rule quality
   quality(pruned_rules)$pvalue <- pvalues
   quality(pruned_rules)$p_BH <- p.adjust(pvalues, method = "BH")
   quality(pruned_rules)$p_BF <- p.adjust(pvalues, method = "bonferroni")
+  quality(pruned_rules)$rule_length <- size(pruned_rules)
   
   # subset significant rules (unadjusted + multiple comparison corrections)
-  unadj_rules = sort(pruned_rules[quality(pruned_rules)$pvalue <= 0.05],
+  unadj_rules <- sort(pruned_rules[quality(pruned_rules)$pvalue <= 0.05],
                      by = c("lift","confidence","support"))
   
   BH_rules <- sort(pruned_rules[quality(pruned_rules)$p_BH <= 0.05],
@@ -223,7 +224,7 @@ for (con in consequents) {
 
 
 
-####### BH Scatterplots #######
+####### Benjamini-Hochberg Scatterplots #######
 
 BH_plots <- list()
 
@@ -231,7 +232,7 @@ for (i in 1:4){
 
   BH_plots[[i]] <-
     scatter_pval(
-      rules = quality(rules[[i]]$BH), 
+      df = quality(rules[[i]]$BH), 
       x_var = "confidence", 
       y_var = "p_BH", 
       size_var = "support", 
@@ -242,9 +243,7 @@ for (i in 1:4){
     )
 }
 
-plots_2x2(BH_plots)
-
-# final graphic
+print(plots_2x2(BH_plots))
 
 
 
@@ -256,25 +255,17 @@ BF_plots <- list()
 
 for (i in 1:4){
   
-  subset <- quality(rules[[i]]$BF)
-  
-  BF_plots[[i]] <- 
-    ggplot(subset, aes(x=confidence, y=p_BF)) +
-    geom_point(aes(size=support, color=lift)) +
-    scale_color_viridis(option="D") +
-    labs(x="Confidence", y="Bonferroni-Adjusted P-Value") +
-    geom_hline(yintercept = 0.05, linetype = "dashed", color = "red") +
-    guides(
-      color = guide_colorbar(order = 1),
-      size  = guide_legend(order = 2)
+  BF_plots[[i]] <-
+    scatter_pval(
+      rules = quality(rules[[i]]$BF), 
+      x_var = "confidence", 
+      y_var = "p_BF", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = "Bonferroni-Adjusted P-Value", 
+      alpha = 0.05
     )
-  
 }
 
-# final graphic
-(BF_plots[[1]] + BF_plots[[2]] + BF_plots[[3]] + BF_plots[[4]]) +
-  plot_layout(ncol = 2) +
-  plot_annotation(tag_levels = "A")
-
-
-
+print(plots_2x2(BF_plots))
