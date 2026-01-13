@@ -3,6 +3,9 @@
 library(RulesTools)
 library(arules)
 library(tidyr)
+library(ggplot2)
+library(viridis)
+library(patchwork)
 
 
 
@@ -49,6 +52,7 @@ get_pvalues <- function(rules, transactions) {
   
   return(p_values)
 }
+
 
 
 
@@ -192,6 +196,31 @@ for (con in consequents) {
 
 
 
-####### P-Value Analysis #######
+####### P-Value Scatterplots #######
+
+scatterplots <- list()
+
+for (i in 1:4){
+  
+  subset <- quality(rules[[i]]$BH)
+  
+  scatterplots[[i]] <- 
+    ggplot(subset, aes(x=confidence, y=p_BH)) +
+    geom_point(aes(size=support, color=lift)) +
+    scale_color_viridis(option="D") +
+    labs(x="Confidence", y="BH-Adjusted P-Value") +
+    geom_hline(yintercept = 0.05, linetype = "dashed", color = "red") +
+    guides(
+      color = guide_colorbar(order = 1),
+      size  = guide_legend(order = 2)
+    )
+  
+}
+
+# final graphic
+(scatterplots[[1]] + scatterplots[[2]] + scatterplots[[3]] + scatterplots[[4]]) +
+  plot_layout(ncol = 2) +
+  plot_annotation(tag_levels = "A")
+
 
 
