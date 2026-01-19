@@ -201,13 +201,13 @@ for (con in consequents) {
   quality(pruned_rules)$lhs <- labels(lhs(pruned_rules))
   
   # subset significant rules (unadjusted + multiple comparison corrections)
-  unadj_rules <- sort(pruned_rules[quality(pruned_rules)$pvalue <= 0.05],
+  unadj_rules <- sort(pruned_rules[is.significant(pruned_rules, alpha = 0.05, adjust = "none")],
                      by = c("lift","confidence","support"))
   
-  BH_rules <- sort(pruned_rules[quality(pruned_rules)$p_BH <= 0.05],
+  BH_rules <- sort(pruned_rules[is.significant(pruned_rules, alpha = 0.05, adjust = "BH")],
                    by = c("lift","confidence","support"))
   
-  BF_rules <- sort(pruned_rules[quality(pruned_rules)$p_BF <= 0.05],
+  BF_rules <- sort(pruned_rules[is.significant(pruned_rules, alpha = 0.05, adjust = "bonferroni")],
                    by = c("lift","confidence","support"))
   
   # final rules list
@@ -312,7 +312,8 @@ for (i in 1:4){
     ) +
     geom_tile(color = "white") +
     scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
-    labs(x = "", y = "Antecedent")
+    labs(x = "", y = "Antecedent") +
+    theme(axis.text.y = element_text(size = 4))
   
 }
 
