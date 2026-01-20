@@ -59,17 +59,19 @@ get_pvalues <- function(rules, transactions) {
 
 ####### Scatterplot Functions #######
 
-scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha){
+scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha, title){
   
   ggplot(df, aes(x = .data[[x_var]], y = .data[[y_var]]) ) +
     geom_point(aes(size = .data[[size_var]], color = .data[[color_var]])) + 
     scale_color_viridis(option="D") +
-    labs(x = x_lab, y = y_lab) +
+    labs(x = x_lab, y = y_lab, title = title) +
     geom_hline(yintercept = alpha, linetype = "dashed", color = "red") +
     guides(
       color = guide_colorbar(order = 1),
       size  = guide_legend(order = 2)
-    )
+    ) + 
+    theme(plot.title = element_text(size = 10))
+    
   
 }
 
@@ -228,6 +230,12 @@ for (con in consequents) {
 ####### Benjamini-Hochberg Scatterplots #######
 
 BH_plots <- list()
+plot_titles <- list(
+  "Interestingness vs. BH-Adjusted P-Value for High eDNA Concentrations",
+  "Interestingness vs. BH-Adjusted P-Value for Low eDNA Concentrations",
+  "Interestingness vs. BH-Adjusted P-Value for Present Electrofish Catch",
+  "Interestingness vs. BH-Adjusted P-Value for Absent Electrofish Catch"
+  )
 
 for (i in 1:4){
 
@@ -240,7 +248,8 @@ for (i in 1:4){
       color_var = "lift", 
       x_lab = "Confidence", 
       y_lab = "BH-Adjusted P-Value", 
-      alpha = 0.05
+      alpha = 0.05,
+      title = plot_titles[[i]]
     )
 }
 
