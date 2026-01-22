@@ -96,6 +96,39 @@ plots_2x2 <- function(plots){
 
 
 
+####### DF Function #######
+
+create_df <- function(rules, method) {
+  
+  # make sure we get the right pvalues for the adjustment type
+  p_type <- switch(
+    method,
+    unadj = "pvalue",
+    BH = "p_BH",
+    BF = "p_BF"
+  )
+  
+  do.call(rbind, lapply(names(rules), function(target) {
+    
+    ruleset <- rules[[target]][[method]]
+    qty <- quality(ruleset)
+    
+    data.frame(
+      consequent = target,
+      support = qty$support,
+      confidence = qty$confidence,
+      lift = qty$lift,
+      p = qty[[p_type]],
+      length = qty$rule_length,
+      stringsAsFactors = FALSE
+    )
+  }))
+}
+
+
+
+
+
 ####### Analysis Parameters #######
 
 NUM_TRANSACTIONS <- 126
@@ -368,15 +401,12 @@ for (i in 1:4){
 
 ####### Other Stats #######
 
-for (i in 1:4){
-  
-  cat("\n\n")
-  print(plot_titles[[i]])
-  
-  print(summary(quality(rules[[i]]$unadj)))
-  
-  print(summary(quality(rules[[i]]$BF)))
-  
-  print(summary(quality(rules[[i]]$BH)))
-  
-}
+unadj_all <- create_df(rules, "unadj")
+bh_all    <- create_df(rules, "BH")
+bf_all    <- create_df(rules, "BF")
+
+unadj_all$method <- "unadj"
+bh_all$method    <- "BH"
+bf_all$method    <- "BF"
+
+global_rules <- rbind(unadj_all, bh_all, bf_all)
