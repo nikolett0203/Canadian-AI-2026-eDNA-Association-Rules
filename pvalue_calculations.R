@@ -96,7 +96,7 @@ plots_2x2 <- function(plots){
 
 
 
-####### DF Function #######
+####### DF Functions #######
 
 create_df <- function(rules, method) {
   
@@ -125,6 +125,13 @@ create_df <- function(rules, method) {
   }))
 }
 
+summary_stats <- function(x) {
+  c(
+    min = min(x),
+    med = median(x),
+    max = max(x)
+  )
+}
 
 
 
@@ -410,3 +417,15 @@ bh_all$method    <- "BH"
 bf_all$method    <- "BF"
 
 global_rules <- rbind(unadj_all, bh_all, bf_all)
+
+summary_table <- aggregate(
+  cbind(support, confidence, lift, p) ~ method,
+  global_rules,
+  summary_stats
+)
+
+summary_table[ , -1] <- round(summary_table[ , -1], 3)
+
+
+
+
