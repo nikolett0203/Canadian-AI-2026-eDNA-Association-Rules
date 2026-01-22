@@ -362,3 +362,21 @@ for (i in 1:4){
   
 }
 
+
+
+
+
+####### Other Stats #######
+
+for (i in 1:4){
+  
+  cat("\n\n")
+  print(plot_titles[[i]])
+  
+  print(summary(quality(rules[[i]]$unadj)))
+  
+  print(summary(quality(rules[[i]]$BF)))
+  
+  print(summary(quality(rules[[i]]$BH)))
+  
+}
