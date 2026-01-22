@@ -70,11 +70,16 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
       color = guide_colorbar(order = 1),
       size  = guide_legend(order = 2)
     ) +
+    scale_x_continuous(
+      labels = scales::label_number(accuracy = 0.01)
+    ) +
     theme(
       plot.title = element_text(
+        size = 12,
         hjust = 0.5    # centered title
       )
-    )
+    ) +
+    theme_bw()
     
   
 }
@@ -233,6 +238,29 @@ for (con in consequents) {
   )
   
 }
+
+####### Undajusted Scatterplots #######
+
+unadj_plots <- list()
+
+
+for (i in 1:4){
+  
+  unadj_plots[[i]] <-
+    scatter_pval(
+      df = quality(rules[[i]]$unadj), 
+      x_var = "confidence", 
+      y_var = "pvalue", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = "Unadjusted P-Value", 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(unadj_plots))
 
 
 
