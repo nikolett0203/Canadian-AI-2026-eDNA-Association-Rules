@@ -430,7 +430,7 @@ print(plots_2x2(unadj_length))
 
 ####### P-Value Heatmaps #######
 
-p_heatmaps <- list()
+BH_heatmaps <- list()
 
 for (i in 1:4){
   p_heatmaps[[i]] <-
