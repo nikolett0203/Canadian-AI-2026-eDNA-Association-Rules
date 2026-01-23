@@ -6,6 +6,7 @@ library(tidyr)
 library(ggplot2)
 library(viridis)
 library(patchwork)
+library(dplyr)
 
 
 
@@ -361,7 +362,7 @@ print(plots_2x2(BF_plots))
 
 ####### Rule Length Scatterplots #######
 
-length_plots <- list()
+BH_length <- list()
 
 for (i in 1:4){
   
@@ -370,7 +371,7 @@ for (i in 1:4){
       df = quality(rules[[i]]$BH), 
       x_var = "rule_length", 
       y_var = "p_BH", 
-      size_var = "support", 
+      size_var = "lift", 
       color_var = "confidence", 
       x_lab = "Rule Length", 
       y_lab = "BH-Adjusted P-Value", 
@@ -426,6 +427,13 @@ summary_table <- aggregate(
 
 summary_table[ , -1] <- round(summary_table[ , -1], 3)
 
+spearman_results <- global_rules %>%
+  group_by(method) %>%
+  summarise(across(
+    all_of(c("confidence", "support", "lift", "length")),
+    ~ cor(p, .x, method = "spearman"),
+    .names = "rho_{.col}"
+  ))
 
-
+spearman_results
 
