@@ -366,7 +366,7 @@ BH_length <- list()
 
 for (i in 1:4){
   
-  length_plots[[i]] <-
+  BH_length[[i]] <-
     scatter_pval(
       df = quality(rules[[i]]$BH), 
       x_var = "rule_length", 
@@ -380,7 +380,49 @@ for (i in 1:4){
     )
 }
 
-print(plots_2x2(length_plots))
+print(plots_2x2(BH_length))
+
+
+BF_length <- list()
+
+for (i in 1:4){
+  
+  BF_length[[i]] <-
+    scatter_pval(
+      df = quality(rules[[i]]$BH), 
+      x_var = "rule_length", 
+      y_var = "p_BH", 
+      size_var = "lift", 
+      color_var = "confidence", 
+      x_lab = "Rule Length", 
+      y_lab = "Bonferroni-Adjusted P-Value", 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(BF_length))
+
+
+unadj_length <- list()
+
+for (i in 1:4){
+  
+  unadj_length[[i]] <-
+    scatter_pval(
+      df = quality(rules[[i]]$BH), 
+      x_var = "rule_length", 
+      y_var = "p_BH", 
+      size_var = "lift", 
+      color_var = "confidence", 
+      x_lab = "Rule Length", 
+      y_lab = "Unadjusted P-Value", 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(unadj_length))
 
 
 
@@ -402,6 +444,8 @@ for (i in 1:4){
     theme(axis.text.y = element_text(size = 4))
   
 }
+
+print(p_heatmaps)
 
 
 
