@@ -499,11 +499,9 @@ spearman_results <- global_rules %>%
 spearman_results
 
 
+######### transformed and combined heatmap/scatter plots
+######### THIS CODE IS TERRIBLE RIGHT NOW IT NEEDS TO BE CLEANED UP 😭
 
-
-#################
-
-####### Updated Scatterplot Function with Log Transform #######
 
 scatter_pval_log <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha, title){
   
@@ -532,7 +530,6 @@ scatter_pval_log <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab
     theme_bw()
 }
 
-####### Unadjusted Scatterplots with Log Transform #######
 
 unadj_plots_log <- list()
 
@@ -554,7 +551,6 @@ for (i in 1:4){
 
 print(plots_2x2(unadj_plots_log))
 
-####### Benjamini-Hochberg Scatterplots with Log Transform #######
 
 BH_plots_log <- list()
 
@@ -576,7 +572,6 @@ for (i in 1:4){
 
 print(plots_2x2(BH_plots_log))
 
-####### Bonferroni Scatterplots with Log Transform #######
 
 BF_plots_log <- list()
 
@@ -598,7 +593,6 @@ for (i in 1:4){
 
 print(plots_2x2(BF_plots_log))
 
-####### Rule Length Scatterplots with Log Transform #######
 
 BH_length_log <- list()
 
@@ -668,3 +662,170 @@ for (i in 1:4){
 }
 
 print(plots_2x2(unadj_length_log))
+
+
+
+
+
+
+
+
+scatter_pval_log <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha, title){
+  
+  # Calculate -log10 of p-values
+  df$neg_log_p <- -log10(df[[y_var]])
+  alpha_line <- -log10(alpha)
+  
+  ggplot(df, aes(x = .data[[x_var]], y = neg_log_p)) +
+    geom_point(aes(size = .data[[size_var]], color = .data[[color_var]])) + 
+    scale_color_viridis(option="D") +
+    labs(x = x_lab, y = y_lab, title = title) +
+    geom_hline(yintercept = alpha_line, linetype = "dashed", color = "red") +
+    guides(
+      color = guide_colorbar(order = 1),
+      size  = guide_legend(order = 2)
+    ) +
+    scale_x_continuous(
+      labels = scales::label_number(accuracy = 0.01)
+    ) +
+    theme(
+      plot.title = element_text(
+        size = 12,
+        hjust = 0.5
+      )
+    ) +
+    theme_bw()
+}
+
+
+BH_plots_log <- list()
+
+for (i in 1:4){
+  
+  BH_plots_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$BH), 
+      x_var = "confidence", 
+      y_var = "p_BH", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = expression(-log[10](P[BH])), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+
+BF_plots_log <- list()
+
+for (i in 1:4){
+  
+  BF_plots_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$BF), 
+      x_var = "confidence", 
+      y_var = "p_BF", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = expression(-log[10](P[BF])), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+
+
+unadj_plots_log <- list()
+
+for (i in 1:4){
+  
+  unadj_plots_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$unadj), 
+      x_var = "confidence", 
+      y_var = "pvalue", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = expression(-log[10](P)), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+
+
+BH_heatmaps <- list()
+
+for (i in 1:4){
+  BH_heatmaps[[i]] <-
+    ggplot(
+      quality(rules[[i]]$BH), 
+      aes(x = "BH-Adjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
+    ) +
+    geom_tile(color = "white") +
+    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[BH]))) +
+    labs(x = "", y = "Antecedent") +
+    theme(axis.text.y = element_text(size = 4))
+  
+}
+
+BF_heatmaps <- list()
+
+for (i in 1:4){
+  BF_heatmaps[[i]] <-
+    ggplot(
+      quality(rules[[i]]$BF), 
+      aes(x = "Bonferroni-Adjusted P-Value", y = reorder(lhs, -log10(p_BF)), fill = -log10(p_BF))
+    ) +
+    geom_tile(color = "white") +
+    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[BF]))) +
+    labs(x = "", y = "Antecedent") +
+    theme(axis.text.y = element_text(size = 4))
+  
+}
+
+unadj_heatmaps <- list()
+
+for (i in 1:4){
+  unadj_heatmaps[[i]] <-
+    ggplot(
+      quality(rules[[i]]$unadj), 
+      aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(pvalue)), fill = -log10(pvalue))
+    ) +
+    geom_tile(color = "white") +
+    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P))) +
+    labs(x = "", y = "Antecedent") +
+    theme(axis.text.y = element_text(size = 4))
+  
+}
+
+for (i in 1:4){
+  
+  combined_plot <- BH_plots_log[[i]] | BH_heatmaps[[i]]
+  combined_plot <- combined_plot + plot_layout(widths = c(2, 1))
+  
+  print(combined_plot)
+  
+}
+
+for (i in 1:4){
+  
+  combined_plot <- BF_plots_log[[i]] | BF_heatmaps[[i]]
+  combined_plot <- combined_plot + plot_layout(widths = c(2, 1))
+  
+  print(combined_plot)
+  
+}
+
+for (i in 1:4){
+  
+  combined_plot <- unadj_plots_log[[i]] | unadj_heatmaps[[i]]
+  combined_plot <- combined_plot + plot_layout(widths = c(2, 1))
+  
+  print(combined_plot)
+  
+}
+
