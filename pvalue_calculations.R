@@ -81,7 +81,6 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
       )
     ) +
     theme_bw()
-    
   
 }
 
@@ -389,9 +388,9 @@ for (i in 1:4){
   
   BF_length[[i]] <-
     scatter_pval(
-      df = quality(rules[[i]]$BH), 
+      df = quality(rules[[i]]$BF), 
       x_var = "rule_length", 
-      y_var = "p_BH", 
+      y_var = "p_BF", 
       size_var = "lift", 
       color_var = "confidence", 
       x_lab = "Rule Length", 
@@ -410,9 +409,9 @@ for (i in 1:4){
   
   unadj_length[[i]] <-
     scatter_pval(
-      df = quality(rules[[i]]$BH), 
+      df = quality(rules[[i]]$unadj), 
       x_var = "rule_length", 
-      y_var = "p_BH", 
+      y_var = "pvalue", 
       size_var = "lift", 
       color_var = "confidence", 
       x_lab = "Rule Length", 
@@ -433,7 +432,7 @@ print(plots_2x2(unadj_length))
 BH_heatmaps <- list()
 
 for (i in 1:4){
-  p_heatmaps[[i]] <-
+  BH_heatmaps[[i]] <-
     ggplot(
       quality(rules[[i]]$BH), 
       aes(x = "BH-Adjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
@@ -445,7 +444,25 @@ for (i in 1:4){
   
 }
 
-print(p_heatmaps)
+print(BH_heatmaps)
+
+
+BF_heatmaps <- list()
+
+for (i in 1:4){
+  BF_heatmaps[[i]] <-
+    ggplot(
+      quality(rules[[i]]$BH), 
+      aes(x = "BH-Adjusted P-Value", y = reorder(lhs, -log10(p_BF)), fill = -log10(p_BH))
+    ) +
+    geom_tile(color = "white") +
+    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
+    labs(x = "", y = "Antecedent") +
+    theme(axis.text.y = element_text(size = 4))
+  
+}
+
+print(BF_heatmaps)
 
 
 
@@ -481,3 +498,173 @@ spearman_results <- global_rules %>%
 
 spearman_results
 
+
+
+
+#################
+
+####### Updated Scatterplot Function with Log Transform #######
+
+scatter_pval_log <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha, title){
+  
+  # Calculate -log10 of p-values
+  df$neg_log_p <- -log10(df[[y_var]])
+  alpha_line <- -log10(alpha)
+  
+  ggplot(df, aes(x = .data[[x_var]], y = neg_log_p)) +
+    geom_point(aes(size = .data[[size_var]], color = .data[[color_var]])) + 
+    scale_color_viridis(option="D") +
+    labs(x = x_lab, y = y_lab, title = title) +
+    geom_hline(yintercept = alpha_line, linetype = "dashed", color = "red") +
+    guides(
+      color = guide_colorbar(order = 1),
+      size  = guide_legend(order = 2)
+    ) +
+    scale_x_continuous(
+      labels = scales::label_number(accuracy = 0.01)
+    ) +
+    theme(
+      plot.title = element_text(
+        size = 12,
+        hjust = 0.5
+      )
+    ) +
+    theme_bw()
+}
+
+####### Unadjusted Scatterplots with Log Transform #######
+
+unadj_plots_log <- list()
+
+for (i in 1:4){
+  
+  unadj_plots_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$unadj), 
+      x_var = "confidence", 
+      y_var = "pvalue", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = expression(-log[10](P)), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(unadj_plots_log))
+
+####### Benjamini-Hochberg Scatterplots with Log Transform #######
+
+BH_plots_log <- list()
+
+for (i in 1:4){
+  
+  BH_plots_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$BH), 
+      x_var = "confidence", 
+      y_var = "p_BH", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = expression(-log[10](P[BH])), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(BH_plots_log))
+
+####### Bonferroni Scatterplots with Log Transform #######
+
+BF_plots_log <- list()
+
+for (i in 1:4){
+  
+  BF_plots_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$BF), 
+      x_var = "confidence", 
+      y_var = "p_BF", 
+      size_var = "support", 
+      color_var = "lift", 
+      x_lab = "Confidence", 
+      y_lab = expression(-log[10](P[BF])), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(BF_plots_log))
+
+####### Rule Length Scatterplots with Log Transform #######
+
+BH_length_log <- list()
+
+for (i in 1:4){
+  
+  BH_length_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$BH), 
+      x_var = "rule_length", 
+      y_var = "p_BH", 
+      size_var = "lift", 
+      color_var = "confidence", 
+      x_lab = "Rule Length", 
+      y_lab = expression(-log[10](P[BH])), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(BH_length_log))
+
+BF_length_log <- list()
+
+for (i in 1:4){
+  
+  BF_length_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$BF), 
+      x_var = "rule_length", 
+      y_var = "p_BF", 
+      size_var = "lift", 
+      color_var = "confidence", 
+      x_lab = "Rule Length", 
+      y_lab = expression(-log[10](P[BF])), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(BF_length_log))
+
+for (i in 1:4){
+  
+  combined_plot <- BH_plots_log[[i]] | BH_heatmaps[[i]]
+  
+  print(combined_plot)
+  
+}
+
+
+unadj_length_log <- list()
+
+for (i in 1:4){
+  
+  unadj_length_log[[i]] <-
+    scatter_pval_log(
+      df = quality(rules[[i]]$unadj), 
+      x_var = "rule_length", 
+      y_var = "pvalue", 
+      size_var = "lift", 
+      color_var = "confidence", 
+      x_lab = "Rule Length", 
+      y_lab = expression(-log[10](P)), 
+      alpha = 0.05,
+      title = plot_titles[[i]]
+    )
+}
+
+print(plots_2x2(unadj_length_log))
