@@ -98,7 +98,7 @@ plots_2x2 <- function(plots){
 
 ####### DF Functions #######
 
-create_df <- function(rules, method) {
+create_df <- function(rules, method, pruned = FALSE) {
   
   # make sure we get the right pvalues for the adjustment type
   p_type <- switch(
@@ -108,9 +108,15 @@ create_df <- function(rules, method) {
     BF = "p_BF"
   )
   
+  if (pruned == TRUE) {
+    subset = "pruned"
+  } else {
+    subset = method
+  }
+  
   do.call(rbind, lapply(names(rules), function(target) {
     
-    ruleset <- rules[[target]][[method]]
+    ruleset <- rules[[target]][[subset]]
     qty <- quality(ruleset)
     
     data.frame(
@@ -470,30 +476,79 @@ print(BF_heatmaps)
 
 ####### Other Stats #######
 
-unadj_all <- create_df(rules, "unadj")
-bh_all    <- create_df(rules, "BH")
-bf_all    <- create_df(rules, "BF")
+unadj_sig <- create_df(rules, "unadj")
+bh_sig    <- create_df(rules, "BH")
+bf_sig    <- create_df(rules, "BF")
 
-unadj_all$method <- "unadj"
-bh_all$method    <- "BH"
-bf_all$method    <- "BF"
+unadj_sig$method <- "unadj"
+bh_sig$method    <- "BH"
+bf_sig$method    <- "BF"
 
-global_rules <- rbind(unadj_all, bh_all, bf_all)
+sig_rules <- rbind(unadj_sig, bh_sig, bf_sig)
 
 summary_table <- aggregate(
   cbind(support, confidence, lift, p) ~ method,
-  global_rules,
+  sig_rules,
   summary_stats
 )
 
 summary_table[ , -1] <- round(summary_table[ , -1], 3)
 
-spearman_results <- global_rules %>%
+spearman_sig <- sig_rules %>%
   group_by(method) %>%
   summarise(across(
-    all_of(c("confidence", "support", "lift", "length")),
+    all_of(c("support", "confidence", "lift", "length")),
     ~ cor(p, .x, method = "spearman"),
     .names = "rho_{.col}"
   ))
 
-spearman_results
+spearman_sig
+
+spearman_sig_by_con <- sig_rules %>%
+  group_by(method, consequent) %>%
+  summarise(
+    across(
+      all_of(c("support", "confidence", "lift", "length")),
+      ~ cor(p, .x, method = "spearman"),
+      .names = "rho_{.col}"
+    ),
+    .groups = "drop"
+  )
+
+spearman_sig_by_con
+
+####### Spearman on Pre-Significance Filtered Sets #######
+
+unadj_nonredund <- create_df(rules, "unadj", TRUE)
+bh_nonredund    <- create_df(rules, "BH", TRUE)
+bf_nonredund    <- create_df(rules, "BF", TRUE)
+
+unadj_nonredund$method <- "unadj"
+bh_nonredund$method    <- "BH"
+bf_nonredund$method    <- "BF"
+
+nonredund_rules <- rbind(unadj_nonredund, bh_nonredund, bf_nonredund)
+
+spearman_nonredund <- nonredund_rules %>%
+  group_by(method) %>%
+  summarise(across(
+    all_of(c("support", "confidence", "lift", "length")),
+    ~ cor(p, .x, method = "spearman"),
+    .names = "rho_{.col}"
+  ))
+
+spearman_nonredund
+
+
+spearman_nonred_by_con <- nonredund_rules %>%
+  group_by(method, consequent) %>%
+  summarise(
+    across(
+      all_of(c("support", "confidence", "lift", "length")),
+      ~ cor(p, .x, method = "spearman"),
+      .names = "rho_{.col}"
+    ),
+    .groups = "drop"
+  )
+
+spearman_nonred_by_con
