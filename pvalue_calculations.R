@@ -62,11 +62,14 @@ get_pvalues <- function(rules, transactions) {
 
 scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha, title){
   
-  ggplot(df, aes(x = .data[[x_var]], y = .data[[y_var]]) ) +
+  df$neg_log_p <- -log10(df[[y_var]])
+  neg_log_a <- -log10(alpha)
+  
+  ggplot(df, aes(x = .data[[x_var]], y = neg_log_p)) +
     geom_point(aes(size = .data[[size_var]], color = .data[[color_var]])) + 
     scale_color_viridis(option="D") +
     labs(x = x_lab, y = y_lab, title = title) +
-    geom_hline(yintercept = alpha, linetype = "dashed", color = "red") +
+    geom_hline(yintercept = neg_log_a, linetype = "dashed", color = "red") +
     guides(
       color = guide_colorbar(order = 1),
       size  = guide_legend(order = 2)
@@ -83,6 +86,10 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
     theme_bw()
   
 }
+
+
+
+
 
 plots_2x2 <- function(plots){
   
