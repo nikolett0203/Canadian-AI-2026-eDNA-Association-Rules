@@ -95,7 +95,7 @@ combined_plots <- function(scatter_plots, heatmaps){
   
   for (i in 1:4){
     
-    combined_plot <- scatterplots[[i]] | heatmaps[[i]]
+    combined_plot <- scatter_plots[[i]] | heatmaps[[i]]
     combined_plot <- combined_plot + plot_layout(widths = c(2, 1))
     
     print(combined_plot)
@@ -297,7 +297,7 @@ for (con in consequents) {
   
 }
 
-####### Undajusted Scatterplots #######
+####### Undajusted Plots #######
 
 unadj_plots <- list()
 
@@ -318,7 +318,23 @@ for (i in 1:4){
     )
 }
 
-print(plots_2x2(unadj_plots))
+unadj_heatmaps <- list()
+
+for (i in 1:4){
+  unadj_heatmaps[[i]] <-
+    ggplot(
+      quality(rules[[i]]$unadj), 
+      aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
+    ) +
+    geom_tile(color = "white") +
+    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
+    labs(x = "", y = "Antecedent") +
+    theme(axis.text.y = element_text(size = 4))
+  
+}
+
+combined_plots(unadj_plots, unadj_heatmaps)
+
 
 
 
