@@ -90,6 +90,22 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
 
 
 
+heatmap_plot <- function() {
+
+    ggplot(
+      quality(rules[[i]]$unadj), 
+      aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
+    ) +
+    geom_tile(color = "white") +
+    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
+    labs(x = "", y = "Antecedent") +
+    theme(axis.text.y = element_text(size = 4))
+  
+}
+
+
+
+
 
 combined_plots <- function(scatter_plots, heatmaps){
   
@@ -320,18 +336,18 @@ for (i in 1:4){
 
 unadj_heatmaps <- list()
 
-for (i in 1:4){
-  unadj_heatmaps[[i]] <-
-    ggplot(
-      quality(rules[[i]]$unadj), 
-      aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
-    ) +
-    geom_tile(color = "white") +
-    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
-    labs(x = "", y = "Antecedent") +
-    theme(axis.text.y = element_text(size = 4))
+#for (i in 1:4){
+#  unadj_heatmaps[[i]] <-
+#    ggplot(
+#      quality(rules[[i]]$unadj), 
+#      aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
+#    ) +
+#    geom_tile(color = "white") +
+#    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
+#    labs(x = "", y = "Antecedent") +
+#    theme(axis.text.y = element_text(size = 4))
   
-}
+#}
 
 combined_plots(unadj_plots, unadj_heatmaps)
 
