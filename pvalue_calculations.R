@@ -91,11 +91,16 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
 
 
 
-plots_2x2 <- function(plots){
+combined_plots <- function(scatter_plots, heatmaps){
   
-  (plots[[1]] + plots[[2]] + plots[[3]] + plots[[4]]) +
-    plot_layout(ncol = 2) +
-    plot_annotation(tag_levels = "A")
+  for (i in 1:4){
+    
+    combined_plot <- scatterplots[[i]] | heatmaps[[i]]
+    combined_plot <- combined_plot + plot_layout(widths = c(2, 1))
+    
+    print(combined_plot)
+    
+  }
   
 }
 
