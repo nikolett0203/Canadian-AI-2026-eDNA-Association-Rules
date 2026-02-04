@@ -91,11 +91,11 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
 
 
 heatmap_plot <- function() {
-
-    ggplot(
-      quality(rules[[i]]$unadj), 
-      aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
-    ) +
+  
+  ggplot(
+    quality(rules[[i]]$unadj), 
+    aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
+  ) +
     geom_tile(color = "white") +
     scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
     labs(x = "", y = "Antecedent") +
@@ -294,7 +294,7 @@ for (con in consequents) {
   
   # subset significant rules (unadjusted + multiple comparison corrections)
   unadj_rules <- sort(pruned_rules[is.significant(pruned_rules, alpha = 0.05, adjust = "none")],
-                     by = c("lift","confidence","support"))
+                      by = c("lift","confidence","support"))
   
   BH_rules <- sort(pruned_rules[is.significant(pruned_rules, alpha = 0.05, adjust = "BH")],
                    by = c("lift","confidence","support"))
@@ -346,7 +346,7 @@ unadj_heatmaps <- list()
 #    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
 #    labs(x = "", y = "Antecedent") +
 #    theme(axis.text.y = element_text(size = 4))
-  
+
 #}
 
 combined_plots(unadj_plots, unadj_heatmaps)
@@ -362,7 +362,7 @@ BH_plots <- list()
 
 
 for (i in 1:4){
-
+  
   BH_plots[[i]] <-
     scatter_pval(
       df = quality(rules[[i]]$BH), 
@@ -542,8 +542,10 @@ spearman_sig <- sig_rules %>%
   group_by(method) %>%
   summarise(across(
     all_of(c("support", "confidence", "lift", "length")),
-    ~ cor(p, .x, method = "spearman"),
-    .names = "rho_{.col}"
+    list(
+      rho = ~ cor.test(p, .x, method = "spearman")$estimate,
+      pval = ~ cor.test(p, .x, method = "spearman")$p.value
+    )
   ))
 
 spearman_sig
@@ -553,8 +555,10 @@ spearman_sig_by_con <- sig_rules %>%
   summarise(
     across(
       all_of(c("support", "confidence", "lift", "length")),
-      ~ cor(p, .x, method = "spearman"),
-      .names = "rho_{.col}"
+      list(
+        rho = ~ cor.test(p, .x, method = "spearman")$estimate,
+        pval = ~ cor.test(p, .x, method = "spearman")$p.value
+      )
     ),
     .groups = "drop"
   )
@@ -577,8 +581,10 @@ spearman_nonredund <- nonredund_rules %>%
   group_by(method) %>%
   summarise(across(
     all_of(c("support", "confidence", "lift", "length")),
-    ~ cor(p, .x, method = "spearman"),
-    .names = "rho_{.col}"
+    list(
+      rho = ~ cor.test(p, .x, method = "spearman")$estimate,
+      pval = ~ cor.test(p, .x, method = "spearman")$p.value
+    )
   ))
 
 spearman_nonredund
@@ -589,8 +595,10 @@ spearman_nonred_by_con <- nonredund_rules %>%
   summarise(
     across(
       all_of(c("support", "confidence", "lift", "length")),
-      ~ cor(p, .x, method = "spearman"),
-      .names = "rho_{.col}"
+      list(
+        rho = ~ cor.test(p, .x, method = "spearman")$estimate,
+        pval = ~ cor.test(p, .x, method = "spearman")$p.value
+      )
     ),
     .groups = "drop"
   )
