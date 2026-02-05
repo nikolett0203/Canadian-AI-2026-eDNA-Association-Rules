@@ -91,7 +91,7 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
 
 
 
-heatmap_plot <- function(rules, consequent, subset, x_label) {
+heatmap_plot <- function(rules, consequent, subset, x_label, plot_title) {
   
   df <- quality(rules[[consequent]][[subset]])
   
@@ -106,12 +106,25 @@ heatmap_plot <- function(rules, consequent, subset, x_label) {
   
   ggplot(
     df,
-    aes(x = x_label, y = reorder(lhs, neg_log_p), fill = neg_log_p)
+    aes(x = 1, y = reorder(lhs, neg_log_p), fill = neg_log_p)
   ) + 
-    geom_tile(color="white") +
-    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P))) +
-    labs(x = "", y = "Antecedent")
-  
+    geom_tile(color = "white", linewidth = 0.2) +
+    scale_x_continuous(breaks = 1, labels = x_label, expand = c(0, 0)) +
+    scale_y_discrete(expand = c(0, 0)) +
+    scale_fill_viridis(option = "magma", direction = -1, 
+                       name = expression(-log[10](P))) +
+    labs(x = "", y = "Antecedent", title = plot_title) +
+    theme_minimal(base_size = 11) +
+    theme(
+      axis.text.y = element_text(size = 7, hjust = 1),
+      axis.text.x = element_text(size = 10, face = "bold"),
+      axis.title.y = element_text(size = 12, face = "bold", margin = margin(r = 10)),
+      panel.grid = element_blank(),
+      legend.position = "right",
+      legend.title = element_text(size = 11),
+      legend.text = element_text(size = 9),
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 13)
+    )
 }
 
 
