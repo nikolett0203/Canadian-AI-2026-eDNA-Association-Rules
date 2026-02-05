@@ -116,13 +116,13 @@ heatmap_plot <- function(rules, consequent, subset, x_label, plot_title) {
     labs(x = "", y = "Antecedent", title = plot_title) +
     theme_minimal(base_size = 11) +
     theme(
-      axis.text.y = element_text(size = 7, hjust = 1),
-      axis.text.x = element_text(size = 10, face = "bold"),
-      axis.title.y = element_text(size = 12, face = "bold", margin = margin(r = 10)),
+      axis.text.y = element_text(size = 4.5, hjust = 1),
+      axis.text.x = element_text(size = 8, face = "bold"),
+      axis.title.y = element_text(size = 8, face = "bold", margin = margin(r = 10)),
       panel.grid = element_blank(),
       legend.position = "right",
-      legend.title = element_text(size = 11),
-      legend.text = element_text(size = 9),
+      legend.title = element_text(size = 7),
+      legend.text = element_text(size = 7),
       plot.title = element_text(hjust = 0.5, face = "bold", size = 13)
     )
 }
@@ -190,6 +190,7 @@ summary_stats <- function(x) {
     max = max(x)
   )
 }
+
 
 
 
@@ -337,10 +338,13 @@ for (con in consequents) {
   
 }
 
+
+
+
+
 ####### Undajusted Plots #######
 
 unadj_plots <- list()
-
 
 for (i in 1:4){
   
@@ -360,18 +364,16 @@ for (i in 1:4){
 
 unadj_heatmaps <- list()
 
-#for (i in 1:4){
-#  unadj_heatmaps[[i]] <-
-#    ggplot(
-#      quality(rules[[i]]$unadj), 
-#      aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
-#    ) +
-#    geom_tile(color = "white") +
-#    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
-#    labs(x = "", y = "Antecedent") +
-#    theme(axis.text.y = element_text(size = 4))
-
-#}
+for (i in 1:4){
+  unadj_heatmaps[[i]] <-
+    heatmap_plot(
+      rules, 
+      i, 
+      "unadj", 
+      "Unadjusted P-Value", 
+      ""
+    ) 
+}
 
 combined_plots(unadj_plots, unadj_heatmaps)
 
@@ -380,10 +382,9 @@ combined_plots(unadj_plots, unadj_heatmaps)
 
 
 
-####### Benjamini-Hochberg Scatterplots #######
+####### Benjamini-Hochberg Plots #######
 
 BH_plots <- list()
-
 
 for (i in 1:4){
   
@@ -401,13 +402,26 @@ for (i in 1:4){
     )
 }
 
-print(plots_2x2(BH_plots))
+BH_heatmaps <- list()
+
+for (i in 1:4){
+  BH_heatmaps[[i]] <-
+    heatmap_plot(
+      rules, 
+      i, 
+      "BH", 
+      "BH-Adjusted P-Value", 
+      ""
+    ) 
+}
+
+combined_plots(BH_plots, BH_heatmaps)
 
 
 
 
 
-####### Bonferroni Scatterplots #######
+####### Bonferroni Plots #######
 
 BF_plots <- list()
 
@@ -427,7 +441,20 @@ for (i in 1:4){
     )
 }
 
-print(plots_2x2(BF_plots))
+BF_heatmaps <- list()
+
+for (i in 1:4){
+  BF_heatmaps[[i]] <-
+    heatmap_plot(
+      rules, 
+      i, 
+      "BF", 
+      "BF-Adjusted P-Value", 
+      ""
+    ) 
+}
+
+combined_plots(BF_plots, BF_heatmaps)
 
 
 
