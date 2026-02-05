@@ -58,7 +58,7 @@ get_pvalues <- function(rules, transactions) {
 
 
 
-####### Scatterplot Functions #######
+####### Plot Functions #######
 
 scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha, title){
   
@@ -90,16 +90,27 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
 
 
 
-heatmap_plot <- function() {
+
+heatmap_plot <- function(rules, consequent, subset, x_label) {
+  
+  df <- quality(rules[[consequent]][[subset]])
+  
+  p_col <- switch(
+    subset,
+    unadj = "pvalue",
+    BH    = "p_BH",
+    BF    = "p_BF"
+  )
+  
+  df$neg_log_p <- -log10(df[[p_col]])
   
   ggplot(
-    quality(rules[[i]]$unadj), 
-    aes(x = "Unadjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
-  ) +
-    geom_tile(color = "white") +
-    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
-    labs(x = "", y = "Antecedent") +
-    theme(axis.text.y = element_text(size = 4))
+    df,
+    aes(x = x_label, y = reorder(lhs, neg_log_p), fill = neg_log_p)
+  ) + 
+    geom_tile(color="white") +
+    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P))) +
+    labs(x = "", y = "Antecedent")
   
 }
 
