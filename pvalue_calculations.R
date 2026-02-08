@@ -67,7 +67,8 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
   
   ggplot(df, aes(x = .data[[x_var]], y = neg_log_p)) +
     geom_point(aes(size = .data[[size_var]], color = .data[[color_var]])) + 
-    scale_color_viridis(option="D") +
+    scale_color_viridis(option="D", labels = scales::label_number(accuracy = 0.01)) +
+    scale_size_continuous(labels = scales::label_number(accuracy = 0.01)) +
     labs(x = x_lab, y = y_lab, title = title) +
     geom_hline(yintercept = neg_log_a, linetype = "dashed", color = "red") +
     guides(
@@ -77,13 +78,12 @@ scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, al
     scale_x_continuous(
       labels = scales::label_number(accuracy = 0.01)
     ) +
+    theme_bw() +
     theme(
       plot.title = element_text(
         size = 12,
-        hjust = 0.5    # centered title
       )
-    ) +
-    theme_bw()
+    )
   
 }
 
@@ -110,6 +110,7 @@ heatmap_plot <- function(rules, consequent, subset, x_label, plot_title) {
   ) + 
     geom_tile(color = "white", linewidth = 0.2) +
     scale_x_continuous(breaks = 1, labels = x_label, expand = c(0, 0)) +
+    scale_size_continuous(labels = scales::label_number(accuracy = 0.01)) +
     scale_y_discrete(expand = c(0, 0)) +
     scale_fill_viridis(option = "magma", direction = -1, 
                        name = expression(-log[10](P))) +
@@ -123,7 +124,8 @@ heatmap_plot <- function(rules, consequent, subset, x_label, plot_title) {
       legend.position = "right",
       legend.title = element_text(size = 7),
       legend.text = element_text(size = 7),
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 13)
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 13),
+      plot.margin = margin(t = 5, r = 5, b = 5, l = 70),
     )
 }
 
@@ -356,7 +358,7 @@ for (i in 1:4){
       size_var = "support", 
       color_var = "lift", 
       x_lab = "Confidence", 
-      y_lab = "Unadjusted P-Value", 
+      y_lab = "Uncorrected P-Value", 
       alpha = 0.05,
       title = plot_titles[[i]]
     )
@@ -370,7 +372,7 @@ for (i in 1:4){
       rules, 
       i, 
       "unadj", 
-      "Unadjusted P-Value", 
+      "Uncorrected P-Value", 
       ""
     ) 
 }
@@ -435,7 +437,7 @@ for (i in 1:4){
       size_var = "support", 
       color_var = "lift", 
       x_lab = "Confidence", 
-      y_lab = "Bonferroni-Adjusted P-Value", 
+      y_lab = "BF-Adjusted P-Value", 
       alpha = 0.05,
       title = plot_titles[[i]]
     )
