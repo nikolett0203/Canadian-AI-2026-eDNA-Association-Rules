@@ -193,6 +193,32 @@ summary_stats <- function(x) {
   )
 }
 
+spearman_table <- function(df) {
+  
+  df %>%
+    pivot_longer(
+      cols = c(support, confidence, lift, length),
+      names_to = "metric",
+      values_to = "value"
+    ) %>%
+    group_by(method, metric) %>%
+    summarise(
+      {
+        ct <- cor.test(p, value, method = "spearman")
+        tibble(
+          rho  = unname(ct$estimate),
+          praw = ct$p.value,
+          n    = sum(complete.cases(p, value))
+        )
+      },
+      .groups = "drop"
+    ) %>%
+    mutate(
+      p_BH = p.adjust(praw, method = "BH"),
+      p_BF = p.adjust(praw, method = "bonferroni")
+    )
+}
+
 
 
 
@@ -358,7 +384,7 @@ for (i in 1:4){
       size_var = "support", 
       color_var = "lift", 
       x_lab = "Confidence", 
-      y_lab = "Uncorrected P-Value", 
+      y_lab = expression(-log[10]("Uncorrected P-value")),
       alpha = 0.05,
       title = plot_titles[[i]]
     )
@@ -372,7 +398,7 @@ for (i in 1:4){
       rules, 
       i, 
       "unadj", 
-      "Uncorrected P-Value", 
+      expression(-log[10]("Uncorrected P-value")), 
       ""
     ) 
 }
@@ -398,7 +424,7 @@ for (i in 1:4){
       size_var = "support", 
       color_var = "lift", 
       x_lab = "Confidence", 
-      y_lab = "BH-Adjusted P-Value", 
+      y_lab = expression(-log[10]("BH-Adjusted P-value")),
       alpha = 0.05,
       title = plot_titles[[i]]
     )
@@ -412,7 +438,7 @@ for (i in 1:4){
       rules, 
       i, 
       "BH", 
-      "BH-Adjusted P-Value", 
+      expression(-log[10]("BH-Adjusted P-value")), 
       ""
     ) 
 }
@@ -437,7 +463,7 @@ for (i in 1:4){
       size_var = "support", 
       color_var = "lift", 
       x_lab = "Confidence", 
-      y_lab = "BF-Adjusted P-Value", 
+      y_lab = expression(-log[10]("BF-Adjusted P-value")),
       alpha = 0.05,
       title = plot_titles[[i]]
     )
@@ -451,7 +477,7 @@ for (i in 1:4){
       rules, 
       i, 
       "BF", 
-      "BF-Adjusted P-Value", 
+      expression(-log[10]("BF-Adjusted P-value")), 
       ""
     ) 
 }
@@ -583,42 +609,8 @@ bf_sig$method    <- "BF"
 
 sig_rules <- rbind(unadj_sig, bh_sig, bf_sig)
 
-summary_table <- aggregate(
-  cbind(support, confidence, lift, p) ~ method,
-  sig_rules,
-  summary_stats
-)
-
-summary_table[ , -1] <- round(summary_table[ , -1], 3)
-
-spearman_sig <- sig_rules %>%
-  group_by(method) %>%
-  summarise(across(
-    all_of(c("support", "confidence", "lift", "length")),
-    list(
-      rho = ~ cor.test(p, .x, method = "spearman")$estimate,
-      pval = ~ cor.test(p, .x, method = "spearman")$p.value
-    )
-  ))
-
+spearman_sig <- spearman_table(sig_rules)
 spearman_sig
-
-spearman_sig_by_con <- sig_rules %>%
-  group_by(method, consequent) %>%
-  summarise(
-    across(
-      all_of(c("support", "confidence", "lift", "length")),
-      list(
-        rho = ~ cor.test(p, .x, method = "spearman")$estimate,
-        pval = ~ cor.test(p, .x, method = "spearman")$p.value
-      )
-    ),
-    .groups = "drop"
-  )
-
-spearman_sig_by_con
-
-####### Spearman on Pre-Significance Filtered Sets #######
 
 unadj_nonredund <- create_df(rules, "unadj", TRUE)
 bh_nonredund    <- create_df(rules, "BH", TRUE)
@@ -630,30 +622,7 @@ bf_nonredund$method    <- "BF"
 
 nonredund_rules <- rbind(unadj_nonredund, bh_nonredund, bf_nonredund)
 
-spearman_nonredund <- nonredund_rules %>%
-  group_by(method) %>%
-  summarise(across(
-    all_of(c("support", "confidence", "lift", "length")),
-    list(
-      rho = ~ cor.test(p, .x, method = "spearman")$estimate,
-      pval = ~ cor.test(p, .x, method = "spearman")$p.value
-    )
-  ))
-
+spearman_nonredund <- spearman_table(nonredund_rules)
 spearman_nonredund
 
 
-spearman_nonred_by_con <- nonredund_rules %>%
-  group_by(method, consequent) %>%
-  summarise(
-    across(
-      all_of(c("support", "confidence", "lift", "length")),
-      list(
-        rho = ~ cor.test(p, .x, method = "spearman")$estimate,
-        pval = ~ cor.test(p, .x, method = "spearman")$p.value
-      )
-    ),
-    .groups = "drop"
-  )
-
-spearman_nonred_by_con
