@@ -135,7 +135,7 @@ heatmap_plot <- function(rules, consequent, subset, x_label, plot_title) {
 
 combined_plots <- function(scatter_plots, heatmaps){
   
-  for (i in 1:4){
+  for (i in 1:2){
     
     combined_plot <- scatter_plots[[i]] | heatmaps[[i]]
     combined_plot <- combined_plot + plot_layout(widths = c(2, 1))
@@ -262,16 +262,16 @@ discretizations <- c(
 
 consequents <- c(
   "eDNAConc=high", 
-  "eDNAConc=low", 
-  "eFishCatch=present", 
-  "eFishCatch=absent"
+  #"eDNAConc=low", 
+  "eFishCatch=present" 
+  #"eFishCatch=absent"
 )
 
 plot_titles <- list(
   "{eDNAConc=high}",
-  "{eDNAConc=low}",
-  "{eFishCatch=present}",
-  "{eFishCatch=absent}"
+  #"{eDNAConc=low}",
+  "{eFishCatch=present}"
+  #"{eFishCatch=absent}"
 )
 
 
@@ -374,7 +374,7 @@ for (con in consequents) {
 
 unadj_plots <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   
   unadj_plots[[i]] <-
     scatter_pval(
@@ -392,7 +392,7 @@ for (i in 1:4){
 
 unadj_heatmaps <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   unadj_heatmaps[[i]] <-
     heatmap_plot(
       rules, 
@@ -414,7 +414,7 @@ combined_plots(unadj_plots, unadj_heatmaps)
 
 BH_plots <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   
   BH_plots[[i]] <-
     scatter_pval(
@@ -432,7 +432,7 @@ for (i in 1:4){
 
 BH_heatmaps <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   BH_heatmaps[[i]] <-
     heatmap_plot(
       rules, 
@@ -453,7 +453,7 @@ combined_plots(BH_plots, BH_heatmaps)
 
 BF_plots <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   
   BF_plots[[i]] <-
     scatter_pval(
@@ -471,7 +471,7 @@ for (i in 1:4){
 
 BF_heatmaps <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   BF_heatmaps[[i]] <-
     heatmap_plot(
       rules, 
@@ -492,7 +492,7 @@ combined_plots(BF_plots, BF_heatmaps)
 
 BH_length <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   
   BH_length[[i]] <-
     scatter_pval(
@@ -502,18 +502,16 @@ for (i in 1:4){
       size_var = "lift", 
       color_var = "confidence", 
       x_lab = "Rule Length", 
-      y_lab = "BH-Adjusted P-Value", 
+      y_lab = expression(-log[10]("BH-Adjusted P-value")), 
       alpha = 0.05,
       title = plot_titles[[i]]
     )
 }
 
-print(plots_2x2(BH_length))
-
 
 BF_length <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   
   BF_length[[i]] <-
     scatter_pval(
@@ -523,18 +521,16 @@ for (i in 1:4){
       size_var = "lift", 
       color_var = "confidence", 
       x_lab = "Rule Length", 
-      y_lab = "Bonferroni-Adjusted P-Value", 
+      y_lab = expression(-log[10]("BF-Adjusted P-value")), 
       alpha = 0.05,
       title = plot_titles[[i]]
     )
 }
 
-print(plots_2x2(BF_length))
-
 
 unadj_length <- list()
 
-for (i in 1:4){
+for (i in 1:2){
   
   unadj_length[[i]] <-
     scatter_pval(
@@ -544,54 +540,11 @@ for (i in 1:4){
       size_var = "lift", 
       color_var = "confidence", 
       x_lab = "Rule Length", 
-      y_lab = "Unadjusted P-Value", 
+      y_lab = expression(-log[10]("Uncorrected P-value")),
       alpha = 0.05,
       title = plot_titles[[i]]
     )
 }
-
-print(plots_2x2(unadj_length))
-
-
-
-
-
-####### P-Value Heatmaps #######
-
-BH_heatmaps <- list()
-
-for (i in 1:4){
-  BH_heatmaps[[i]] <-
-    ggplot(
-      quality(rules[[i]]$BH), 
-      aes(x = "BH-Adjusted P-Value", y = reorder(lhs, -log10(p_BH)), fill = -log10(p_BH))
-    ) +
-    geom_tile(color = "white") +
-    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
-    labs(x = "", y = "Antecedent") +
-    theme(axis.text.y = element_text(size = 4))
-  
-}
-
-print(BH_heatmaps)
-
-
-BF_heatmaps <- list()
-
-for (i in 1:4){
-  BF_heatmaps[[i]] <-
-    ggplot(
-      quality(rules[[i]]$BH), 
-      aes(x = "BH-Adjusted P-Value", y = reorder(lhs, -log10(p_BF)), fill = -log10(p_BH))
-    ) +
-    geom_tile(color = "white") +
-    scale_fill_viridis(option = "magma", direction = -1, name = expression(-log[10](P[adj]))) +
-    labs(x = "", y = "Antecedent") +
-    theme(axis.text.y = element_text(size = 4))
-  
-}
-
-print(BF_heatmaps)
 
 
 
@@ -624,5 +577,34 @@ nonredund_rules <- rbind(unadj_nonredund, bh_nonredund, bf_nonredund)
 
 spearman_nonredund <- spearman_table(nonredund_rules)
 spearman_nonredund
+
+spearman_table_by_con <- function(df) {
+  
+  df %>%
+    pivot_longer(
+      cols = c(support, confidence, lift, length),
+      names_to = "metric",
+      values_to = "value"
+    ) %>%
+    group_by(method, consequent, metric) %>%
+    summarise(
+      {
+        ct <- cor.test(p, value, method = "spearman")
+        tibble(
+          rho  = unname(ct$estimate),
+          praw = ct$p.value,
+          n    = sum(complete.cases(p, value))
+        )
+      },
+      .groups = "drop"
+    ) %>%
+    mutate(
+      p_BH = p.adjust(praw, method = "BH"),
+      p_BF = p.adjust(praw, method = "bonferroni")
+    )
+}
+
+spearman_sig_by_con <- spearman_table_by_con(sig_rules)
+spearman_nonred_by_con <- spearman_table_by_con(nonredund_rules)
 
 
