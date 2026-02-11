@@ -607,4 +607,22 @@ spearman_table_by_con <- function(df) {
 spearman_sig_by_con <- spearman_table_by_con(sig_rules)
 spearman_nonred_by_con <- spearman_table_by_con(nonredund_rules)
 
+out_dir <- "results"
+dir.create(out_dir, showWarnings = FALSE)
+
+write.csv(spearman_sig,
+          file = file.path(out_dir, "spearman_sig.csv"),
+          row.names = FALSE)
+
+write.csv(spearman_nonredund,
+          file = file.path(out_dir, "spearman_nonredund.csv"),
+          row.names = FALSE)
+
+write.csv(spearman_sig_by_con,
+          file = file.path(out_dir, "spearman_sig_by_con.csv"),
+          row.names = FALSE)
+
+write.csv(spearman_nonred_by_con,
+          file = file.path(out_dir, "spearman_nonred_by_con.csv"),
+          row.names = FALSE)
 
