@@ -348,21 +348,6 @@ for (i in 1:2){
     )
 }
 
-unadj_heatmaps <- list()
-
-for (i in 1:2){
-  unadj_heatmaps[[i]] <-
-    heatmap_plot(
-      rules, 
-      i, 
-      "unadj", 
-      expression(-log[10]("Uncorrected P-value")), 
-      ""
-    ) 
-}
-
-combined_plots(unadj_plots, unadj_heatmaps)
-
 
 
 
@@ -388,21 +373,6 @@ for (i in 1:2){
     )
 }
 
-BH_heatmaps <- list()
-
-for (i in 1:2){
-  BH_heatmaps[[i]] <-
-    heatmap_plot(
-      rules, 
-      i, 
-      "BH", 
-      expression(-log[10]("BH-Adjusted P-value")), 
-      ""
-    ) 
-}
-
-combined_plots(BH_plots, BH_heatmaps)
-
 
 
 
@@ -426,21 +396,6 @@ for (i in 1:2){
       title = plot_titles[[i]]
     )
 }
-
-BF_heatmaps <- list()
-
-for (i in 1:2){
-  BF_heatmaps[[i]] <-
-    heatmap_plot(
-      rules, 
-      i, 
-      "BF", 
-      expression(-log[10]("BF-Adjusted P-value")), 
-      ""
-    ) 
-}
-
-combined_plots(BF_plots, BF_heatmaps)
 
 
 
