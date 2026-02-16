@@ -54,6 +54,9 @@ consequents <- c(
 
 get_p <- function(rules, transactions) {
   
+  if (length(rules) == 0) 
+    return(numeric(0))
+  
   quality_df <- quality(rules)
   n <- length(transactions)                       # could also use NUM_TRANSACTIONS but this is more general
   
@@ -92,6 +95,11 @@ get_p <- function(rules, transactions) {
   
   return(pvalues)
 
+}
+
+sig_sort <- function(rules, method) {
+  sort(rules[is.significant(rules, alpha = 0.05, adjust = method)],
+       by = c("lift", "confidence", "support"))
 }
 
 
@@ -137,6 +145,41 @@ transactions <- as(discretized_df, "transactions")
 
 
 ####### Rule Mining #######
+
+rules <- list()
+
+for (con in consequents) {
+  
+  # mine rules for each target: eDNA=high and eFishCatch=present
+  raw_rules <- apriori(
+    transactions,
+    parameter = list(support = 1/NUM_TRANSACTIONS, confidence = 1/NUM_TRANSACTIONS),
+    appearance = list(rhs = con)
+  )
+  
+  # subset non-redundant rules
+  pruned_rules <- raw_rules[!is.redundant(raw_rules, measure = "confidence")]
+  
+  # isolate ps
+  p_values <- get_p(pruned_rules, transactions)
+  
+  # perform adjustments
+  quality(pruned_rules)$p_raw   <- p_values
+  quality(pruned_rules)$p_BF    <- p.adjust(p_values, method = "bonferroni")
+  quality(pruned_rules)$p_BH    <- p.adjust(p_values, method = "BH")
+  quality(pruned_rules)$len     <- size(pruned_rules)
+  
+  # final rules list
+  rules[[con]] <- list(
+    raw    = raw_rules,
+    pruned = pruned_rules,
+    unadj  = sig_sort(pruned_rules, "none"),
+    BF     = sig_sort(pruned_rules, "bonferroni"),
+    BH     = sig_sort(pruned_rules, "BH")
+  )
+  
+}
+
 
 
 
