@@ -2,6 +2,8 @@
 
 library(RulesTools)
 library(arules)
+library(tidyverse)
+library(ggplot2)
 
 
 
@@ -168,6 +170,7 @@ for (con in consequents) {
   quality(pruned_rules)$p_BF    <- p.adjust(p_values, method = "bonferroni")
   quality(pruned_rules)$p_BH    <- p.adjust(p_values, method = "BH")
   quality(pruned_rules)$len     <- size(pruned_rules)
+  quality(pruned_rules)$lhs     <- labels(lhs(pruned_rules))
   
   # final rules list
   rules[[con]] <- list(
@@ -180,7 +183,35 @@ for (con in consequents) {
   
 }
 
+####### Scatterplots #######
 
+plot_data <- rules[["eDNAConc=high"]]$pruned %>%
+  quality() %>%
+  pivot_longer(
+    cols = c(p_raw, p_BH, p_BF),
+    names_to = "p_type",
+    values_to = "pvalue"
+  ) %>%
+  mutate(p_type = factor(p_type,
+                         levels = c("p_raw", "p_BF", "p_BH"),
+                         labels = c("Unadjusted", "Bonferroni", "Benjamini-Hochberg")))
+  
+ggplot(plot_data, aes(confidence, -log10(pvalue))) + 
+  facet_wrap(~p_type, nrow = 1) +
+  geom_point(alpha = 0.6, size = 1.2) +
+  labs(
+    title = "{eDNAConc=high}",
+    x = "Confidence",
+    y = expression(-log[10](italic(p)))
+  ) + 
+  geom_hline(yintercept = -log10(0.05), linetype = "dashed", linewidth = 0.4, color = "red") +
+  theme_bw() +
+  theme(
+    strip.background = element_rect(fill = "white"),
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold")
+  )
+  
 
 
 
@@ -201,68 +232,11 @@ for (con in consequents) {
 
 
 library(tidyr)
-library(ggplot2)
 library(viridis)
 library(patchwork)
 library(dplyr)
 
 
-
-
-
-####### P-Value Function #######
-
-
-
-
-
-
-
-####### Plot Functions #######
-
-scatter_pval <- function(df, x_var, y_var, size_var, color_var, x_lab, y_lab, alpha, title){
-  
-  df$neg_log_p <- -log10(df[[y_var]])
-  neg_log_a <- -log10(alpha)
-  
-  ggplot(df, aes(x = .data[[x_var]], y = neg_log_p)) +
-    geom_point(aes(size = .data[[size_var]], color = .data[[color_var]])) + 
-    scale_color_viridis(option="D", labels = scales::label_number(accuracy = 0.01)) +
-    scale_size_continuous(labels = scales::label_number(accuracy = 0.01)) +
-    labs(x = x_lab, y = y_lab, title = title) +
-    geom_hline(yintercept = neg_log_a, linetype = "dashed", color = "red") +
-    guides(
-      color = guide_colorbar(order = 1),
-      size  = guide_legend(order = 2)
-    ) +
-    scale_x_continuous(
-      labels = scales::label_number(accuracy = 0.01)
-    ) +
-    theme_bw() +
-    theme(
-      plot.title = element_text(
-        size = 12,
-      )
-    )
-  
-}
-
-
-
-
-
-combined_plots <- function(scatter_plots, heatmaps){
-  
-  for (i in 1:2){
-    
-    combined_plot <- scatter_plots[[i]] | heatmaps[[i]]
-    combined_plot <- combined_plot + plot_layout(widths = c(2, 1))
-    
-    print(combined_plot)
-    
-  }
-  
-}
 
 
 
