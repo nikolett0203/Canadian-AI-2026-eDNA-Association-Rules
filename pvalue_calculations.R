@@ -104,6 +104,53 @@ sig_sort <- function(rules, method) {
        by = c("lift", "confidence", "support"))
 }
 
+prep_data <- function(rules, con) {
+  rules[[con]]$pruned %>%
+    quality() %>%
+    pivot_longer(
+      cols      = c(p_raw, p_BH, p_BF),
+      names_to  = "p_type",
+      values_to = "p_value" 
+    ) %>%
+    mutate(
+      neg_log_p = -log10(p_value),
+      p_type    = factor(p_type,
+                         levels = c("p_raw", "p_BH", "p_BF"),
+                         labels = c("Unadjusted", "Benjamini-Hochberg", "Bonferroni"))
+    )
+}
+
+make_fig <- function(data, x_vars, x_lab, title) {
+  
+  plots <- lapply(x_vars, function(x_var) {
+    
+    ggplot(data, aes_string(x_var, "neg_log_p")) +
+      facet_wrap(~p_type, nrow = 1) +
+      geom_point(alpha = 0.6, size = 1.2) + 
+      geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
+      labs(
+        x = x_lab,
+        y = expression(-log[10](italic(p)))
+      ) +
+
+      theme_bw() +
+      theme(
+        strip.background = element_rect(fill = "white"),
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(face = "bold")
+      )
+    
+  })
+  
+}
+
+for (con in consequents) {
+  
+  data <- prep_data(rules, con)
+  fig <- make_fig(data, c("confidence", "support"), c("Confidence", "Support"), con)
+  
+}
+
 
 
 
@@ -138,7 +185,7 @@ for(i in seq_along(discretizations)){
 
 # backpack and site already discrete, so they can be added to df directly
 discretized_df[["Backpack"]] <- as.factor(BrookTrout$Backpack)
-discretized_df[["Site"]] <- as.factor(BrookTrout$Site)
+discretized_df[["Site"]]     <- as.factor(BrookTrout$Site)
 
 # convert df into transactions
 transactions <- as(discretized_df, "transactions")
@@ -167,8 +214,8 @@ for (con in consequents) {
   
   # perform adjustments
   quality(pruned_rules)$p_raw   <- p_values
-  quality(pruned_rules)$p_BF    <- p.adjust(p_values, method = "bonferroni")
   quality(pruned_rules)$p_BH    <- p.adjust(p_values, method = "BH")
+  quality(pruned_rules)$p_BF    <- p.adjust(p_values, method = "bonferroni")
   quality(pruned_rules)$len     <- size(pruned_rules)
   quality(pruned_rules)$lhs     <- labels(lhs(pruned_rules))
   
@@ -177,40 +224,61 @@ for (con in consequents) {
     raw    = raw_rules,
     pruned = pruned_rules,
     unadj  = sig_sort(pruned_rules, "none"),
-    BF     = sig_sort(pruned_rules, "bonferroni"),
-    BH     = sig_sort(pruned_rules, "BH")
+    BH     = sig_sort(pruned_rules, "BH"),
+    BF     = sig_sort(pruned_rules, "bonferroni")
   )
   
 }
 
 ####### Scatterplots #######
 
-plot_data <- rules[["eDNAConc=high"]]$pruned %>%
-  quality() %>%
-  pivot_longer(
-    cols = c(p_raw, p_BH, p_BF),
-    names_to = "p_type",
-    values_to = "pvalue"
-  ) %>%
-  mutate(p_type = factor(p_type,
-                         levels = c("p_raw", "p_BF", "p_BH"),
-                         labels = c("Unadjusted", "Bonferroni", "Benjamini-Hochberg")))
+
+
+
+
+scatterplots <- lapply(consequents, function(con) {
   
-ggplot(plot_data, aes(confidence, -log10(pvalue))) + 
-  facet_wrap(~p_type, nrow = 1) +
-  geom_point(alpha = 0.6, size = 1.2) +
-  labs(
-    title = "{eDNAConc=high}",
-    x = "Confidence",
-    y = expression(-log[10](italic(p)))
-  ) + 
-  geom_hline(yintercept = -log10(0.05), linetype = "dashed", linewidth = 0.4, color = "red") +
-  theme_bw() +
-  theme(
-    strip.background = element_rect(fill = "white"),
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold")
-  )
+  # subset pruned rules and pivot columns for easier plotting
+  data <- rules[[con]]$pruned %>%
+    quality() %>%
+    pivot_longer (
+      cols = c(p_raw, p_BH, p_BF),
+      names_to = "p_type",
+      values_to = "pvalue"
+    ) %>%
+    mutate(p_type = factor(p_type,
+                           levels = c("p_raw", "p_BH", "p_BF"),
+                           labels = c("Unadjusted", "Benjamini-Hochberg", "Bonferroni")))
+    
+  ggplot(data, aes(confidence, -log10(pvalue))) + 
+    facet_wrap(~p_type, nrow = 1) +
+    geom_point(alpha = 0.6, size = 1.2) +
+    labs(
+      title = "{eDNAConc=high}",
+      x = "Confidence",
+      y = expression(-log[10](italic(p)))
+    ) + 
+    geom_hline(yintercept = -log10(0.05), linetype = "dashed", linewidth = 0.4, color = "red") +
+    theme_bw() +
+    theme(
+      strip.background = element_rect(fill = "white"),
+      panel.grid.minor = element_blank(),
+      plot.title = element_text(face = "bold")
+    )
+  
+})
+
+  
+
+
+
+
+
+
+
+
+
+
   
 
 
