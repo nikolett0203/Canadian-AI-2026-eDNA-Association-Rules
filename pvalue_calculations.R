@@ -120,35 +120,33 @@ prep_data <- function(rules, con) {
     )
 }
 
-make_fig <- function(data, x_vars, x_lab, title) {
+make_fig <- function(data, x_vars, x_labs, title) {
   
-  plots <- lapply(x_vars, function(x_var) {
+  plots <- Map(function(x_var, x_lab) {
     
     ggplot(data, aes_string(x_var, "neg_log_p")) +
-      facet_wrap(~p_type, nrow = 1) +
-      geom_point(alpha = 0.6, size = 1.2) + 
+      facet_wrap(~p_type, nrow = 1) + 
+      geom_point(alpha = 0.6, size = 1.2) +
       geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "red") +
+      scale_x_continuous(labels = scales::label_number(accuracy = 0.01)) +
+      scale_y_continuous(labels = scales::label_number(accuracy = 0.1)) +
       labs(
         x = x_lab,
         y = expression(-log[10](italic(p)))
       ) +
-
       theme_bw() +
       theme(
         strip.background = element_rect(fill = "white"),
         panel.grid.minor = element_blank(),
-        plot.title = element_text(face = "bold")
+        panel.spacing.x = grid::unit(0.8, "lines")
       )
-    
-  })
+  }, x_vars, x_labs)
   
-}
-
-for (con in consequents) {
-  
-  data <- prep_data(rules, con)
-  fig <- make_fig(data, c("confidence", "support"), c("Confidence", "Support"), con)
-  
+  patchwork::wrap_plots(plots, ncol = 1) +
+    patchwork::plot_annotation(
+      title = title,
+      theme = theme(plot.title = element_text(face = "bold", size = 14))
+    )
 }
 
 
@@ -230,56 +228,48 @@ for (con in consequents) {
   
 }
 
-####### Scatterplots #######
 
 
 
+####### Main Scatterplots #######
 
-
-scatterplots <- lapply(consequents, function(con) {
+for (con in consequents) {
   
-  # subset pruned rules and pivot columns for easier plotting
-  data <- rules[[con]]$pruned %>%
-    quality() %>%
-    pivot_longer (
-      cols = c(p_raw, p_BH, p_BF),
-      names_to = "p_type",
-      values_to = "pvalue"
-    ) %>%
-    mutate(p_type = factor(p_type,
-                           levels = c("p_raw", "p_BH", "p_BF"),
-                           labels = c("Unadjusted", "Benjamini-Hochberg", "Bonferroni")))
-    
-  ggplot(data, aes(confidence, -log10(pvalue))) + 
-    facet_wrap(~p_type, nrow = 1) +
-    geom_point(alpha = 0.6, size = 1.2) +
-    labs(
-      title = "{eDNAConc=high}",
-      x = "Confidence",
-      y = expression(-log[10](italic(p)))
-    ) + 
-    geom_hline(yintercept = -log10(0.05), linetype = "dashed", linewidth = 0.4, color = "red") +
-    theme_bw() +
-    theme(
-      strip.background = element_rect(fill = "white"),
-      panel.grid.minor = element_blank(),
-      plot.title = element_text(face = "bold")
-    )
+  data <- prep_data(rules, con)
   
-})
-
+  fig <- make_fig(
+    data,
+    x_vars = c("confidence", "support"),
+    x_labs = c("Confidence", "Support"),
+    title  = paste0("{", con, "}")
+  )
   
-
-
-
-
-
-
-
-
-
-
+  print(fig)
   
+}
+
+
+
+
+####### Appendix Scatterplots #######
+
+for (con in consequents) {
+  
+  data <- prep_data(rules, con)
+  
+  fig <- make_fig(
+    data,
+    x_vars = c("lift", "len"),
+    x_labs = c("Lift", "Rule Length"),
+    title  = paste0("{", con, "}")
+  )
+  
+  print(fig)
+  
+}
+
+
+
 
 
 
