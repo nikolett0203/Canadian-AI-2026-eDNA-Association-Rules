@@ -4,7 +4,7 @@ library(RulesTools)
 library(arules)
 library(tidyverse)
 library(ggplot2)
-# patchwork too?
+library(patchwork)
 
 
 
@@ -143,8 +143,8 @@ make_fig <- function(data, x_vars, x_labs, title) {
       )
   }, x_vars, x_labs)
   
-  patchwork::wrap_plots(plots, ncol = 1) +
-    patchwork::plot_annotation(
+  wrap_plots(plots, ncol = 1) +
+    plot_annotation(
       title = title,
       theme = theme(plot.title = element_text(face = "bold", size = 14))
     )
@@ -171,6 +171,32 @@ prep_for_stats <- function(rules, method) {
       stringsAsFactors = FALSE
     )
   }))
+}
+
+calc_coeffs <- function(data, by_con) {
+  
+  group_vars <- if(by_con) c("method", "consequent", "metric")
+                else c("method", "metric")
+  
+  data %>%
+    pivot_longer(
+      cols = c(support, confidence, lift, length),
+      names_to = "metric",
+      values_to = "value"
+    ) %>%
+    group_by(across(all_of(group_vars))) %>%
+    summarise({
+      ct <- cor.test(p, value, method = "spearman")
+      tibble(
+        rho  = unname(ct$estimate),
+        praw = ct$p.value,
+        n    = sum(complete.cases(p, value))
+      )
+    }, .groups = "drop") %>%
+    mutate(
+      p_BH = p.adjust(praw, method = "BH"),
+      p_BF = p.adjust(praw, method = "bonferroni")
+    )
 }
 
 
@@ -293,3 +319,5 @@ nonredund_rules <- do.call(rbind, lapply(methods, function(m) {
   df
 }))
 
+spearman_nonredund     <- calc_coeffs(nonredund_rules, FALSE)
+spearman_nonred_by_con <- calc_coeffs(nonredund_rules, TRUE)
