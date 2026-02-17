@@ -4,6 +4,7 @@ library(RulesTools)
 library(arules)
 library(tidyverse)
 library(ggplot2)
+# patchwork too?
 
 
 
@@ -231,7 +232,7 @@ for (con in consequents) {
 
 
 
-####### Main Scatterplots #######
+####### Scatterplots #######
 
 for (con in consequents) {
   
@@ -247,11 +248,6 @@ for (con in consequents) {
   print(fig)
   
 }
-
-
-
-
-####### Appendix Scatterplots #######
 
 for (con in consequents) {
   
@@ -374,19 +370,6 @@ spearman_table <- function(df) {
 
 ####### Other Stats #######
 
-unadj_sig <- create_df(rules, "unadj")
-bh_sig    <- create_df(rules, "BH")
-bf_sig    <- create_df(rules, "BF")
-
-unadj_sig$method <- "unadj"
-bh_sig$method    <- "BH"
-bf_sig$method    <- "BF"
-
-sig_rules <- rbind(unadj_sig, bh_sig, bf_sig)
-
-spearman_sig <- spearman_table(sig_rules)
-spearman_sig
-
 unadj_nonredund <- create_df(rules, "unadj", TRUE)
 bh_nonredund    <- create_df(rules, "BH", TRUE)
 bf_nonredund    <- create_df(rules, "BF", TRUE)
@@ -426,22 +409,13 @@ spearman_table_by_con <- function(df) {
     )
 }
 
-spearman_sig_by_con <- spearman_table_by_con(sig_rules)
 spearman_nonred_by_con <- spearman_table_by_con(nonredund_rules)
 
 out_dir <- "results"
 dir.create(out_dir, showWarnings = FALSE)
 
-write.csv(spearman_sig,
-          file = file.path(out_dir, "spearman_sig.csv"),
-          row.names = FALSE)
-
 write.csv(spearman_nonredund,
           file = file.path(out_dir, "spearman_nonredund.csv"),
-          row.names = FALSE)
-
-write.csv(spearman_sig_by_con,
-          file = file.path(out_dir, "spearman_sig_by_con.csv"),
           row.names = FALSE)
 
 write.csv(spearman_nonred_by_con,
