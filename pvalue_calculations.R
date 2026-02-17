@@ -105,7 +105,7 @@ sig_sort <- function(rules, method) {
        by = c("lift", "confidence", "support"))
 }
 
-prep_data <- function(rules, con) {
+prep_for_plots <- function(rules, con) {
   rules[[con]]$pruned %>%
     quality() %>%
     pivot_longer(
@@ -148,6 +148,29 @@ make_fig <- function(data, x_vars, x_labs, title) {
       title = title,
       theme = theme(plot.title = element_text(face = "bold", size = 14))
     )
+}
+
+prep_for_stats <- function(rules, method) {
+  
+  p_type <- switch(
+    method,
+    unadj = "p_raw",
+    BH    = "p_BH",
+    BF    = "p_BF"
+  )
+  
+  do.call(rbind, lapply(names(rules), function(target) {
+    qty <- quality(rules[[target]]$pruned)
+    data.frame(
+      consequent = target,
+      support    = qty$support,
+      confidence = qty$confidence,
+      lift       = qty$lift,
+      p          = qty[[p_type]],
+      length     = qty$len,
+      stringsAsFactors = FALSE
+    )
+  }))
 }
 
 
@@ -236,7 +259,7 @@ for (con in consequents) {
 
 for (con in consequents) {
   
-  data <- prep_data(rules, con)
+  data <- prep_for_plots(rules, con)
   
   fig <- make_fig(
     data,
@@ -251,7 +274,7 @@ for (con in consequents) {
 
 for (con in consequents) {
   
-  data <- prep_data(rules, con)
+  data <- prep_for_plots(rules, con)
   
   fig <- make_fig(
     data,
@@ -267,158 +290,16 @@ for (con in consequents) {
 
 
 
+####### Correlation Analysis #######
 
+methods <- c("unadj", "BH", "BF")
 
+nonredund_rules <- do.call(rbind, lapply(methods, function(m) {
+  df <- create_df(rules, m)
+  df$method <- m
+  df
+}))
 
-
-
-
-
-
-
-
-
-
-
-
-####### Libraries #######
-
-
-
-library(tidyr)
-library(viridis)
-library(patchwork)
-library(dplyr)
-
-
-
-
-
-
-
-####### DF Functions #######
-
-create_df <- function(rules, method, pruned = FALSE) {
-  
-  # make sure we get the right pvalues for the adjustment type
-  p_type <- switch(
-    method,
-    unadj = "pvalue",
-    BH = "p_BH",
-    BF = "p_BF"
-  )
-  
-  if (pruned == TRUE) {
-    subset = "pruned"
-  } else {
-    subset = method
-  }
-  
-  do.call(rbind, lapply(names(rules), function(target) {
-    
-    ruleset <- rules[[target]][[subset]]
-    qty <- quality(ruleset)
-    
-    data.frame(
-      consequent = target,
-      support = qty$support,
-      confidence = qty$confidence,
-      lift = qty$lift,
-      p = qty[[p_type]],
-      length = qty$rule_length,
-      stringsAsFactors = FALSE
-    )
-  }))
-}
-
-summary_stats <- function(x) {
-  c(
-    min = min(x),
-    med = median(x),
-    max = max(x)
-  )
-}
-
-spearman_table <- function(df) {
-  
-  df %>%
-    pivot_longer(
-      cols = c(support, confidence, lift, length),
-      names_to = "metric",
-      values_to = "value"
-    ) %>%
-    group_by(method, metric) %>%
-    summarise(
-      {
-        ct <- cor.test(p, value, method = "spearman")
-        tibble(
-          rho  = unname(ct$estimate),
-          praw = ct$p.value,
-          n    = sum(complete.cases(p, value))
-        )
-      },
-      .groups = "drop"
-    ) %>%
-    mutate(
-      p_BH = p.adjust(praw, method = "BH"),
-      p_BF = p.adjust(praw, method = "bonferroni")
-    )
-}
-
-
-
-
-####### Other Stats #######
-
-unadj_nonredund <- create_df(rules, "unadj", TRUE)
-bh_nonredund    <- create_df(rules, "BH", TRUE)
-bf_nonredund    <- create_df(rules, "BF", TRUE)
-
-unadj_nonredund$method <- "unadj"
-bh_nonredund$method    <- "BH"
-bf_nonredund$method    <- "BF"
-
-nonredund_rules <- rbind(unadj_nonredund, bh_nonredund, bf_nonredund)
-
-spearman_nonredund <- spearman_table(nonredund_rules)
-spearman_nonredund
-
-spearman_table_by_con <- function(df) {
-  
-  df %>%
-    pivot_longer(
-      cols = c(support, confidence, lift, length),
-      names_to = "metric",
-      values_to = "value"
-    ) %>%
-    group_by(method, consequent, metric) %>%
-    summarise(
-      {
-        ct <- cor.test(p, value, method = "spearman")
-        tibble(
-          rho  = unname(ct$estimate),
-          praw = ct$p.value,
-          n    = sum(complete.cases(p, value))
-        )
-      },
-      .groups = "drop"
-    ) %>%
-    mutate(
-      p_BH = p.adjust(praw, method = "BH"),
-      p_BF = p.adjust(praw, method = "bonferroni")
-    )
-}
-
-spearman_nonred_by_con <- spearman_table_by_con(nonredund_rules)
-
-out_dir <- "results"
-dir.create(out_dir, showWarnings = FALSE)
-
-write.csv(spearman_nonredund,
-          file = file.path(out_dir, "spearman_nonredund.csv"),
-          row.names = FALSE)
-
-write.csv(spearman_nonred_by_con,
-          file = file.path(out_dir, "spearman_nonred_by_con.csv"),
-          row.names = FALSE)
+spearman_nonredund     <- spearman_table(nonredund_rules)
+spearman_nonred_by_con <- spearman_table(nonredund_rules, by_con = TRUE)
 
