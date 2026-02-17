@@ -261,29 +261,22 @@ for (con in consequents) {
   
   data <- prep_for_plots(rules, con)
   
-  fig <- make_fig(
+  fig_con_sup <- make_fig(
     data,
-    x_vars = c("confidence", "support"),
-    x_labs = c("Confidence", "Support"),
+    x_vars = c("support", "confidence"),
+    x_labs = c("Support", "Confidence"),
     title  = paste0("{", con, "}")
   )
   
-  print(fig)
-  
-}
-
-for (con in consequents) {
-  
-  data <- prep_for_plots(rules, con)
-  
-  fig <- make_fig(
+  fig_lift_len <- make_fig(
     data,
     x_vars = c("lift", "len"),
     x_labs = c("Lift", "Rule Length"),
     title  = paste0("{", con, "}")
   )
   
-  print(fig)
+  print(fig_con_sup)
+  print(fig_lift_len)
   
 }
 
@@ -295,11 +288,8 @@ for (con in consequents) {
 methods <- c("unadj", "BH", "BF")
 
 nonredund_rules <- do.call(rbind, lapply(methods, function(m) {
-  df <- create_df(rules, m)
+  df <- prep_for_stats(rules, m)
   df$method <- m
   df
 }))
-
-spearman_nonredund     <- spearman_table(nonredund_rules)
-spearman_nonred_by_con <- spearman_table(nonredund_rules, by_con = TRUE)
 
