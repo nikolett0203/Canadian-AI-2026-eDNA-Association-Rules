@@ -35,14 +35,14 @@ labels <- c(
 )
 
 discretizations <- c(
-  13.3,                      # for eDNA concentrations (50% LOD)
-  0,                         # for electrofish catch (absence/presence)
-  15.03,                     # for air temp (avg temp for sample site in Sept)
-  15,                        # for water temp (optimal temp for brook trout)
-  7.75,                      # for pH (CCME guideline)
-  9.5,                       # for dissolved oxygen (CCME guideline)
-  1047,                      # for conductivity (median)***
-  1.04                       # for volume filtered (median)
+  13.3,                      # For eDNA concentrations (50% LOD)
+  0,                         # For electrofishing catch (absence/presence)
+  15.03,                     # For air temp (avg temp for sample site in Sept)
+  15,                        # For water temp (optimal temp for brook trout)
+  7.75,                      # For pH (CCME guideline)
+  9.5,                       # For dissolved oxygen (CCME guideline)
+  1047,                      # For conductivity (median)
+  1.04                       # For volume filtered (median)
 )
 
 consequents <- c(
@@ -117,7 +117,7 @@ prep_for_plots <- function(rules, con) {
       neg_log_p = -log10(p_value),
       p_type    = factor(p_type,
                          levels = c("p_raw", "p_BH", "p_BF"),
-                         labels = c("Unadjusted", "Benjamini-Hochberg", "Bonferroni"))
+                         labels = c("Uncorrected", "Benjamini-Hochberg", "Bonferroni"))
     )
 }
 
@@ -289,15 +289,15 @@ for (con in consequents) {
   
   fig_con_sup <- make_fig(
     data,
-    x_vars = c("support", "confidence"),
-    x_labs = c("Support", "Confidence"),
+    x_vars = c("confidence", "lift"),
+    x_labs = c("Confidence", "Lift"),
     title  = paste0("{", con, "}")
   )
   
   fig_lift_len <- make_fig(
     data,
-    x_vars = c("lift", "len"),
-    x_labs = c("Lift", "Rule Length"),
+    x_vars = c("support", "len"),
+    x_labs = c("Support", "Rule Length"),
     title  = paste0("{", con, "}")
   )
   
@@ -321,3 +321,12 @@ nonredund_rules <- do.call(rbind, lapply(methods, function(m) {
 
 spearman_nonredund     <- calc_coeffs(nonredund_rules, FALSE)
 spearman_nonred_by_con <- calc_coeffs(nonredund_rules, TRUE)
+
+
+
+
+####### Save Results #######
+
+save_dir <- "results"
+
+if (!dir.exists(save_dir)) dir.create(save_dir, recursive = TRUE)
