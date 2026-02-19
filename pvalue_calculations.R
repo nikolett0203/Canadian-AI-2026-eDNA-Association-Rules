@@ -330,3 +330,33 @@ spearman_nonred_by_con <- calc_coeffs(nonredund_rules, TRUE)
 save_dir <- "results"
 
 if (!dir.exists(save_dir)) dir.create(save_dir, recursive = TRUE)
+
+for (con in consequents) {
+  
+  con_label <- gsub("=", "_", con)
+  
+  write.csv(
+    as(rules[[con]]$raw, "data.frame"),
+    file.path(save_dir, paste0(con_label, "_mined.csv")),
+    row.names = FALSE
+  )
+  
+  write.csv(
+    as(rules[[con]]$pruned, "data.frame"),
+    file.path(save_dir, paste0(con_label, "_nonredundant.csv")),
+    row.names = FALSE
+  )
+  
+  for (method in c("unadj", "BH", "BF")) {
+    write.csv(
+      as(rules[[con]][[method]], "data.frame"),
+      file.path(save_dir, paste0(con_label, "_sig_", method, ".csv")),
+      row.names = FALSE
+    )
+  }
+  
+}
+
+
+
+
