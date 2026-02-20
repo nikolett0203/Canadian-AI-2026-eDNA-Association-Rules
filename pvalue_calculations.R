@@ -1,6 +1,5 @@
 ####### Libraries #######
 
-library(RulesTools)
 library(arules)
 library(tidyverse)
 library(ggplot2)
@@ -49,6 +48,12 @@ consequents <- c(
 
 
 ####### Helper Functions #######
+
+# Simple discretization helper for continuous variables
+dtize_col <- function(column, cutoff, labels = c("low", "high")) {
+  stopifnot(is.numeric(column), length(cutoff) == 1, is.numeric(cutoff))
+  factor(ifelse(column <= cutoff, labels[1], labels[2]), levels = labels)
+}
 
 # Compute one-sided Fisher exact-test p-values for a rule set
 # This mimics is.significant() from arules but returns the p-values for analysis
@@ -214,6 +219,9 @@ calc_coeffs <- function(data, by_con) {
 
 discretized_df <- data.frame(matrix(nrow=NUM_TRANSACTIONS, ncol=0))
 
+# Load Brook Trout dataset from local CSV
+BrookTrout <- read.csv("BrookTrout.csv", stringsAsFactors = FALSE)
+
 # Discretize continuous variables into low/high categories
 # or (absent/present for eletrofishing) 
 for(i in seq_along(discretizations)){
@@ -222,7 +230,6 @@ for(i in seq_along(discretizations)){
     temp <- dtize_col(
       column = BrookTrout[[covariates[i]]],
       cutoff = discretizations[i],
-      infinity = TRUE,
       labels = c("absent", "present")
     )
   }
@@ -230,8 +237,7 @@ for(i in seq_along(discretizations)){
   else {
     temp <- dtize_col(
       column = BrookTrout[[covariates[i]]],
-      cutoff = discretizations[i],
-      infinity = TRUE
+      cutoff = discretizations[i]
     )
   }
   
