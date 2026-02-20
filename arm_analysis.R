@@ -220,7 +220,7 @@ calc_coeffs <- function(data, by_con) {
 discretized_df <- data.frame(matrix(nrow=NUM_TRANSACTIONS, ncol=0))
 
 # Load Brook Trout dataset from local CSV
-BrookTrout <- read.csv("BrookTrout.csv", stringsAsFactors = FALSE)
+BrookTrout <- read.csv("data/BrookTrout.csv", stringsAsFactors = FALSE)
 
 # Discretize continuous variables into low/high categories
 # or (absent/present for eletrofishing) 
