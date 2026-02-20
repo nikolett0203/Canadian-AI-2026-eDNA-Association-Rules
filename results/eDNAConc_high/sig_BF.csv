@@ -1,4 +1,0 @@
-"rules","support","confidence","coverage","lift","count","p_raw","p_BH","p_BF","len","lhs"
-"{eFishCatch=present,pH=high,Backpack=OSMOS} => {eDNAConc=high}",0.261904761904762,0.916666666666667,0.285714285714286,1.54,33,1.06482916897156e-06,7.9862187672867e-05,7.9862187672867e-05,4,"{eFishCatch=present,pH=high,Backpack=OSMOS}"
-"{eFishCatch=present,VolumeFiltered=low,Backpack=OSMOS} => {eDNAConc=high}",0.246031746031746,0.861111111111111,0.285714285714286,1.44666666666667,31,7.22678926094125e-05,0.00180669731523531,0.00542009194570594,4,"{eFishCatch=present,VolumeFiltered=low,Backpack=OSMOS}"
-"{pH=high,Backpack=OSMOS} => {eDNAConc=high}",0.317460317460317,0.833333333333333,0.380952380952381,1.4,40,1.30681568177545e-05,0.000490055880665793,0.000980111761331585,3,"{pH=high,Backpack=OSMOS}"
