@@ -10,8 +10,10 @@ library(patchwork)
 
 ####### Analysis Parameters #######
 
+# Number of transactions in the BrookTrout dataset
 NUM_TRANSACTIONS <- 126
 
+# Continuous variables from the BrookTrout dataset 
 covariates <-c(
   "eDNAConc",
   "eFishCatch",
@@ -23,28 +25,21 @@ covariates <-c(
   "VolumeFiltered"
 )
 
-labels <- c(
-  "eDNA Concentration (Copies/µL)",
-  "Electrofish Catch",
-  "Air Temperature (°C)",
-  "Water Temperature (°C)",
-  "pH",
-  "Dissolved Oxygen (mg/L)",
-  "Conductivity (µS)",
-  "Volume Filtered (mL)"
+# Discretization thresholds for converting continuous variables into {low, high}
+# (and converting eFishCatch into {absent, present})
+discretizations <- c(     # Thresholds chosen:
+  13.3,                   # eDNAConc: 50% limit of detection from the molecular assay
+  0,                      # eFishCatch: absence/presence threshold 
+  15.03,                  # AirTemp: Sept. '19 average daily temperature at Hanlon Creek
+  15,                     # WaterTemp: optimal temperature for brook trout
+  7.75,                   # pH: CCME longterm freshwater guideline
+  9.5,                    # DissolvedOxygen: CCME longterm freshwater guideline
+  1047,                   # Conductivity: median from this dataset
+  1.04                    # VolumeFiltered: median from this dataset
 )
 
-discretizations <- c(
-  13.3,                      # For eDNA concentrations (50% LOD)
-  0,                         # For electrofishing catch (absence/presence)
-  15.03,                     # For air temp (avg temp for sample site in Sept)
-  15,                        # For water temp (optimal temp for brook trout)
-  7.75,                      # For pH (CCME guideline)
-  9.5,                       # For dissolved oxygen (CCME guideline)
-  1047,                      # For conductivity (median)
-  1.04                       # For volume filtered (median)
-)
-
+# Targeted consequents, selected for their relevance to domain experts in
+# improving species detection success
 consequents <- c(
   "eDNAConc=high", 
   "eFishCatch=present" 
@@ -55,37 +50,41 @@ consequents <- c(
 
 ####### Helper Functions #######
 
+# Compute one-sided Fisher exact-test p-values for a rule set
+# This mimics is.significant() from arules but returns the p-values for analysis
 get_p <- function(rules, transactions) {
   
   if (length(rules) == 0) 
     return(numeric(0))
   
   quality_df <- quality(rules)
-  n <- length(transactions)                       # could also use NUM_TRANSACTIONS but this is more general
+  n <- length(transactions)
   
+  # Cache unique LHS/RHS itemsets and supports to avoid repeated support() calls
   lhs <- unique(lhs(rules))
   rhs <- unique(rhs(rules))
   
-  lhs_supp <- support(lhs, transactions) * n      # support() returns fraction, multiply by n to get count
+  lhs_supp <- support(lhs, transactions) * n
   rhs_supp <- support(rhs, transactions) * n
   
-  # create support lookup table
+  # Create lookup vectors keyed by itemset label for O(1) access inside the loop
   lhs_labels <- labels(lhs)
   rhs_labels <- labels(rhs)
   names(lhs_supp) <- lhs_labels
   names(rhs_supp) <- rhs_labels
   
-  # vectorized p-value calcs
+  # Construct a 2x2 contingency table for each rule, X -> Y:
+  #   [a b]
+  #   [c d]
+  # where a = count(X & Y), b = count(X & !Y), c = count(!X & Y), d = count(!X & !Y)
+  # Use one-sided Fisher test for positive association: P(Y|X) > P(Y)
   pvalues <- vapply(1:length(rules), function(i) {
     
-    # get count of antecedent&consequent
     a <- quality_df$count[i]
     
-    # lookup count of antecedent
     lhs_label <- labels(lhs(rules[i]))
     b <- lhs_supp[lhs_label] - a
     
-    # lookup count of consequent
     rhs_label <- labels(rhs(rules[i]))
     c <- rhs_supp[rhs_label] - a
     
@@ -100,11 +99,15 @@ get_p <- function(rules, transactions) {
 
 }
 
+# Filter rules at alpha = 0.05 then sort remaining rules
+# by lift, confidence, and support (descending)
 sig_sort <- function(rules, method) {
   sort(rules[is.significant(rules, alpha = 0.05, adjust = method)],
        by = c("lift", "confidence", "support"))
 }
 
+# Prepare longform dataframe with raw/BH/BF p-values stacked into one column
+# Calculate -log10(p) for plotting
 prep_for_plots <- function(rules, con) {
   rules[[con]]$pruned %>%
     quality() %>%
@@ -121,6 +124,7 @@ prep_for_plots <- function(rules, con) {
     )
 }
 
+# Generate scatterplots of -log10(p) vs selected rule metrics for each correction
 make_fig <- function(data, x_vars, x_labs, title) {
   
   plots <- Map(function(x_var, x_lab) {
@@ -150,6 +154,7 @@ make_fig <- function(data, x_vars, x_labs, title) {
     )
 }
 
+# Create a single dataframe of rule metrics for correlation analysis
 prep_for_stats <- function(rules, method) {
   
   p_type <- switch(
@@ -173,6 +178,9 @@ prep_for_stats <- function(rules, method) {
   }))
 }
 
+# Compute Spearman correlations between p-values and rule interestingness metrics
+# Correlation p-values are BF- and BH-adjusted, but only BH-adjusted values are
+# used in the final analysis
 calc_coeffs <- function(data, by_con) {
   
   group_vars <- if(by_con) c("method", "consequent", "metric")
@@ -204,10 +212,10 @@ calc_coeffs <- function(data, by_con) {
 
 ####### Data Pre-Processing #######
 
-# init empty df
 discretized_df <- data.frame(matrix(nrow=NUM_TRANSACTIONS, ncol=0))
 
-# add discretized values to df
+# Discretize continuous variables into low/high categories
+# or (absent/present for eletrofishing) 
 for(i in seq_along(discretizations)){
   
   if(covariates[i] == "eFishCatch") {
@@ -231,11 +239,11 @@ for(i in seq_along(discretizations)){
   
 }
 
-# backpack and site already discrete, so they can be added to df directly
+# Backpack (i.e. sampler type) and site are already discrete
 discretized_df[["Backpack"]] <- as.factor(BrookTrout$Backpack)
 discretized_df[["Site"]]     <- as.factor(BrookTrout$Site)
 
-# convert df into transactions
+# Convert discretized data into transaction format required by arules apriori() 
 transactions <- as(discretized_df, "transactions")
 
 
@@ -247,27 +255,30 @@ rules <- list()
 
 for (con in consequents) {
   
-  # mine rules for each target: eDNA=high and eFishCatch=present
+  # Mine rules for each target: {eDNAConc=high} and {eFishCatch=present}
+  # Thresholds of 1/n were chosen to capture rare rules for exploratory analysis +
+  # to generate a large candidate rule set to demonstrate significance pruning
   raw_rules <- apriori(
     transactions,
     parameter = list(support = 1/NUM_TRANSACTIONS, confidence = 1/NUM_TRANSACTIONS),
     appearance = list(rhs = con)
   )
   
-  # subset non-redundant rules
+  # Remove redundant rules
   pruned_rules <- raw_rules[!is.redundant(raw_rules, measure = "confidence")]
   
-  # isolate ps
+  # Compute raw Fisher p-values (mirroring arules is.significant())
   p_values <- get_p(pruned_rules, transactions)
   
-  # perform adjustments
+  # Save the uncorrected, Benjamini-Hochberg, and Bonferroni corrected rules
+  # Also save rule length and antecedent itemsets
   quality(pruned_rules)$p_raw   <- p_values
   quality(pruned_rules)$p_BH    <- p.adjust(p_values, method = "BH")
   quality(pruned_rules)$p_BF    <- p.adjust(p_values, method = "bonferroni")
   quality(pruned_rules)$len     <- size(pruned_rules)
   quality(pruned_rules)$lhs     <- labels(lhs(pruned_rules))
   
-  # final rules list
+  # Save raw rules, non-redundant rules, and significance-filtered subsets
   rules[[con]] <- list(
     raw    = raw_rules,
     pruned = pruned_rules,
@@ -283,6 +294,8 @@ for (con in consequents) {
 
 ####### Scatterplots #######
 
+# For each consequent, visualize rule metrics vs significance under
+# uncorrected/BH/Bonferroni p-values
 for (con in consequents) {
   
   data <- prep_for_plots(rules, con)
@@ -311,6 +324,8 @@ for (con in consequents) {
 
 ####### Correlation Analysis #######
 
+# Compute Spearman correlations between p-values and interestingness measures
+# on the non-redundant rule sets per correction method
 methods <- c("uncorr", "BH", "BF")
 
 nonredund_rules <- do.call(rbind, lapply(methods, function(m) {
@@ -327,6 +342,7 @@ spearman_nonred_by_con <- calc_coeffs(nonredund_rules, TRUE)
 
 ####### Save Results #######
 
+# Write mined rules for reproducibility and inspection
 save_dir <- "results"
 
 if (!dir.exists(save_dir)) dir.create(save_dir, recursive = TRUE)
@@ -362,6 +378,22 @@ for (con in consequents) {
   }
 }
 
+####### Save Correlation Results #######
 
+corr_dir <- file.path(save_dir, "correlations")
+if (!dir.exists(corr_dir)) dir.create(corr_dir, recursive = TRUE)
 
+# Spearman correlations overall
+write.csv(
+  spearman_nonredund,
+  file.path(corr_dir, "spearman_overall.csv"),
+  row.names = FALSE
+)
+
+# Spearman correlations by consequent
+write.csv(
+  spearman_nonred_by_con,
+  file.path(corr_dir, "spearman_by_consequent.csv"),
+  row.names = FALSE
+)
 
