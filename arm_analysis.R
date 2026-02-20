@@ -29,7 +29,7 @@ covariates <-c(
 discretizations <- c(     # Thresholds chosen:
   13.3,                   # eDNAConc: 50% limit of detection from the molecular assay
   0,                      # eFishCatch: absence/presence threshold 
-  15.03,                  # AirTemp: Sept. '19 average daily temperature at Hanlon Creek
+  15.03,                  # AirTemp: Sept. '19 average daily temperature at the study site
   15,                     # WaterTemp: optimal temperature for brook trout
   7.75,                   # pH: CCME longterm freshwater guideline
   9.5,                    # DissolvedOxygen: CCME longterm freshwater guideline
