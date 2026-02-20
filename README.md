@@ -19,7 +19,27 @@ In this script, we apply association rule mining (ARM) to a published brook trou
 | Package | Purpose |
 |---|---|
 | `arules` | Rule mining, redundancy pruning, significance testing |
-| `RulesTools` | Discretization utilities and the BrookTrout dataset |
 | `tidyverse` | Data manipulation |
 | `ggplot2` | Plotting |
 | `patchwork` | Figure composition |
+
+Install from CRAN:
+```r
+install.packages(c("arules", "tidyverse", "ggplot2", "patchwork"))
+```
+
+### Data
+
+This analysis uses `BrookTrout.csv`, included in this repository. The data are derived from:
+
+> Nolan et al. (2023). *Detection of native brook trout (Salvelinus fontinalis) 
+> using environmental DNA and electrofishing.*
+
+It is loaded in the script with:
+```r
+BrookTrout <- read.csv("BrookTrout.csv")
+```
+
+The dataset comprises 126 transactions across 10 variables (eDNA concentrations, 
+electrofishing counts, and eight physicochemical metadata variables) with no missing values.
+
