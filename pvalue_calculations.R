@@ -154,7 +154,7 @@ prep_for_stats <- function(rules, method) {
   
   p_type <- switch(
     method,
-    unadj = "p_raw",
+    uncorr = "p_raw",
     BH    = "p_BH",
     BF    = "p_BF"
   )
@@ -271,7 +271,7 @@ for (con in consequents) {
   rules[[con]] <- list(
     raw    = raw_rules,
     pruned = pruned_rules,
-    unadj  = sig_sort(pruned_rules, "none"),
+    uncorr  = sig_sort(pruned_rules, "none"),
     BH     = sig_sort(pruned_rules, "BH"),
     BF     = sig_sort(pruned_rules, "bonferroni")
   )
@@ -311,7 +311,7 @@ for (con in consequents) {
 
 ####### Correlation Analysis #######
 
-methods <- c("unadj", "BH", "BF")
+methods <- c("uncorr", "BH", "BF")
 
 nonredund_rules <- do.call(rbind, lapply(methods, function(m) {
   df <- prep_for_stats(rules, m)
@@ -334,27 +334,32 @@ if (!dir.exists(save_dir)) dir.create(save_dir, recursive = TRUE)
 for (con in consequents) {
   
   con_label <- gsub("=", "_", con)
+  con_dir <- file.path(save_dir, con_label)
   
+  if (!dir.exists(con_dir)) dir.create(con_dir, recursive = TRUE)
+  
+  # All mined rules
   write.csv(
     as(rules[[con]]$raw, "data.frame"),
-    file.path(save_dir, paste0(con_label, "_mined.csv")),
+    file.path(con_dir, "mined.csv"),
     row.names = FALSE
   )
   
+  # Non-redundant rules with all p-values
   write.csv(
     as(rules[[con]]$pruned, "data.frame"),
-    file.path(save_dir, paste0(con_label, "_nonredundant.csv")),
+    file.path(con_dir, "nonredundant.csv"),
     row.names = FALSE
   )
   
-  for (method in c("unadj", "BH", "BF")) {
+  # Significance-filtered subsets
+  for (method in c("uncorr", "BH", "BF")) {
     write.csv(
       as(rules[[con]][[method]], "data.frame"),
-      file.path(save_dir, paste0(con_label, "_sig_", method, ".csv")),
+      file.path(con_dir, paste0("sig_", method, ".csv")),
       row.names = FALSE
     )
   }
-  
 }
 
 
