@@ -308,15 +308,15 @@ for (con in consequents) {
   
   fig_con_sup <- make_fig(
     data,
-    x_vars = c("confidence", "lift"),
-    x_labs = c("Confidence", "Lift"),
+    x_vars = c("confidence", "support"),
+    x_labs = c("Confidence", "Support"),
     title  = paste0("{", con, "}")
   )
   
   fig_lift_len <- make_fig(
     data,
-    x_vars = c("support", "len"),
-    x_labs = c("Support", "Rule Length"),
+    x_vars = c("lift", "len"),
+    x_labs = c("Lift", "Rule Length"),
     title  = paste0("{", con, "}")
   )
   
